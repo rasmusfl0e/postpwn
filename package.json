@@ -1,0 +1,19 @@
+{
+  "name": "postpwn",
+  "version": "0.0.0",
+  "description": "postpwn\r =======",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rasmusfl0e/postpwn.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rasmusfl0e/postpwn/issues"
+  },
+  "homepage": "https://github.com/rasmusfl0e/postpwn"
+}
