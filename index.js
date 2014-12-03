@@ -1,35 +1,23 @@
 var qsa = require("./qsa");
-var timer = require("./timer");
-var dim = require("./dimensions");
+var events = require("./events");
+var viewport = require("./viewport");
+var throttle = require("./throttle");
 
 var win = window;
 var doc = document;
-var body = doc.body;
-var html = doc.documentElement;
 
-// utility functions
-
-function hasClass(element, className) {
-	var classList = element.className.split(/\s+/);
-	return !(classList.indexOf(className) === -1);
-}
-
-/************/
-
-var documentHeight = 0;
 var viewportOffset = 0;
 var viewportHeight = 0;
-var uid = 0;
 var active = false;
-var data = {};
-var plugins = {};
-var placeholders = [];
 var buffer = 800;
-var scrollableClassName = null;
+var data = [];
+var plugins = {};
+var elements = [];
+var checkThrottled = throttle(check);
 
 function check() {
 	var i = 0;
-	var l = placeholders.length;
+	var l = elements.length;
 
 	if (!l) {
 		stop();
@@ -38,191 +26,123 @@ function check() {
 		var visible = [];
 		var top = viewportOffset - buffer;
 		var bottom = viewportOffset + viewportHeight + buffer;
-		var placeholder, d, placeholderTop, placeholderBottom;
+		var d, element, elementTop, elementBottom;
 
 		while (i < l) {
-			placeholder = placeholders[i++];
-			if (placeholder) {
-				d = data[placeholder.id];
+			element = elements[i];
+			if (element) {
+				d = data[i];
 				if (d) {
-					placeholderTop = d.top;
-					placeholderBottom = d.bottom;
-					if (bottom < placeholderTop) {
-						break;
-					}
-					else if (placeholderTop > top || (placeholderBottom > top && placeholderBottom < bottom)) {
-						visible.push(placeholder);
+					elementTop = d.top;
+					elementBottom = d.bottom;
+					if ((elementTop >= top && elementTop <= bottom) || (elementBottom >= top && elementBottom <= bottom)) {
+						visible.push(element);
 					}
 				}
 			}
+			i++;
 		}
 
-		i = 0;
 		l = visible.length;
-		while (i < l) {
-			replace(visible[i++]);
+		while (l--) {
+			init(visible[l]);
 		}
 	}
 }
 
-var checkStart = timer(check).start;
-
-function replace(placeholder) {
-	var index = placeholders.indexOf(placeholder);
-	var id = placeholder.id;
-
-	plugins[data[id].type].replace(placeholder);
-
+function init(element) {
+	var index = elements.indexOf(element);
 	if (index > -1) {
-		placeholders.splice(index, 1);
-		delete data[id];
+		plugins[data[index].type].init(element);
+		elements.splice(index, 1);
+		data.splice(index, 1);
 	}
-}
+} 
 
 function stop() {
 	if (active) {
-		global.removeEventListener("scroll", setAndStartCheck);
-		global.removeEventListener("resize", updateAndCheck);
+		events.remove("scroll", setAndStartCheck);
+		events.remove("resize", updateAndCheck);
 		active = false;
 	}
 }
 
-function updatePositions(_placeholders) {
-	_placeholders = _placeholders || placeholders;
+function update() {
 	var i = 0;
-	var l = _placeholders.length;
-	var placeholder;
-	var rect, top, id, d;
+	var l = elements.length;
+	var element, rect, top, d;
 
 	while (i < l) {
-		placeholder = _placeholders[i++];
-		var rect = placeholder.getBoundingClientRect();
-		if (rect.height) {
-			var top = viewportOffset + rect.top;
-			var id = placeholder.id;
-			var d = data[id];
-			if (d) {
-				d.top = top;
-				d.bottom = top + rect.height;
-			}
+		element = elements[i];
+		var d = data[i];
+		if (element && d) {
+			rect = element.getBoundingClientRect();
+			top = viewportOffset + rect.top;
+			d.top = top;
+			d.bottom = rect.bottom;
 		}
+		i++;
 	}
-	_placeholders.sort(function (a, b) {
-		return data[a.id].top - data[b.id].top;
-	});
-	}
+}
 
-function updateAndCheck() {
-	viewportHeight = dim.viewport.height();
-	updatePositions();
+function resize () {
+	viewportHeight = viewport.height();
+	update();
 	check();
 }
 
-function setAndStartCheck() {
-	viewportOffset = dim.viewport.offset();
-	checkStart();
+function scroll () {
+	viewportOffset = viewport.offset();
+	checkThrottled();
 }
 
-function handleScrollable(element) {
-	var _placeholders = [];
-	var type;
-
-	for (type in plugins) {
-		_placeholders.concat(getPlaceholders(element, plugins[type]));
-	}
-	element.addEventListener("scroll", function () {
-		updatePositions(_placeholders);
-		check();
-	});
-};
-
-function getPlaceholders(plugin, element) {
-	var _placeholders = [];
-	var elements = qsa(plugin.selector, element || doc);
-
-	elements.forEach(function (placeholder) {
-		if (placeholders.indexOf(placeholder) < 0) {
-			var id = placeholder.id;
-			if (!id) {
-				id = placeholder.id = "_dr-placeholder-" + uid++;
-			}
-			if (!data[id]) {
-				data[id] = {
-					type: plugin.type
-				};
-			}
-			placeholders.push(placeholder);
+function search (plugin, root) {
+	qsa(plugin.selector, root || doc).forEach(function (element) {
+		var index = elements.indexOf(element);
+		if (index < 0) {
+			index = elements.length;
+			data[index] = {
+				type: plugin.type
+			};
+			elements.push(element);
 		}
-		_placeholders.push(placeholder);
 	});
-
-	return _placeholders;
 }
 
-function config (options) {
-	var key;
-	for (key in options) {
-	
-		switch (key) {
-			case "plugins":
-				options[key].forEach(function (plugin) {
-					plugins[plugin.type] = plugin; 
-				});
-				break;
-
-			case "scrollableClassName":
-				scrollableClassName = options[key];
-				break;
-		}
-	}
-}
-
-function register (name, selector, replacer) {
-	var plugin = {
+function register (name, selector, init) {
+	plugins[name] = {
 		type: name,
 		selector: selector,
-		replacer: replacer
+		init: init
 	};
-	plugins[name] = plugin;
-	var _placeholders = getPlaceholders(plugin);
-	if (_placeholders.length) {
-		updatePositions(_placeholders);
-	}
+	initialize();
 }
 
-function init (element) {
-	element = element || doc;
+function initialize (root) {
+	root = root || doc;
 
-	if (scrollableClassName) {
-		var scrollables = (hasClass(element, scrollableClassName)) ? [element] : qsa("." + scrollableClassName, element);
-		scrollables.forEach(handleScrollable);
-	}
+	Object.keys(plugins).forEach(function (type) {
+		search(plugins[type], root);
+	});
 
-	var _placeholders = [];
-	var type;
-
-	for (type in plugins) {
-		_placeholders = _placeholders.concat(getPlaceholders(plugins[type], element));
-	}
-
-	if (_placeholders.length) {
+	if (elements.length) {
 
 		// for clients that do not support lazyloading
 		if (win.operamini) {
-			placeholders.forEach(replace);
+			elements.forEach(replace);
 		}
 		else {
 
 			if (!active) {
 				active = true;
-				global.addEventListener("scroll", setAndStartCheck);
-				global.addEventListener("resize", updateAndCheck);
+				events.add("scroll", scroll);
+				events.add("resize", resize);
 			}
 
 			setTimeout(function () {
-				viewportOffset = dim.viewport.offset();
-				viewportHeight = dim.viewport.height();
-				updatePositions(placeholders);
+				viewportOffset = viewport.offset();
+				viewportHeight = viewport.height();
+				update();
 				check();
 			}, 0);
 
@@ -230,7 +150,7 @@ function init (element) {
 	}
 };
 
-return {
+module.exports = {
 	register: register,
-	update: updateAndCheck
+	initialize: initialize
 };

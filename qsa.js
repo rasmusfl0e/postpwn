@@ -20,4 +20,4 @@ catch (e) {
 	}
 }
 
-return qsa;
+module.exports = qsa;
