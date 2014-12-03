@@ -1,25 +1,21 @@
 var win = window;
 
-var add = function (event, func, element) {
-	element = element || win; 
+var add = function (element, event, func) {
 	element.addEventListener(event, func);
 };
 
-if (win.attachEvent) {
-	add = function (event, func, element) {
-		element = element || win;
+if (!win.addEventListener && win.attachEvent) {
+	add = function (element, event, func) {
 		element.attachEvent("on" + event, func);
 	};
 }
 
-var remove = function (event, func, element) {
-	element = element || win; 
+var remove = function (element, event, func) {
 	element.removeEventListener(event, func);
 };
 
-if (win.detachEvent) {
-	remove = function (event, func, element) {
-		element = element || win;
+if (!win.removeEventListener && win.detachEvent) {
+	remove = function (element, event, func) {
 		element.detachEvent("on" + event, func);
 	};
 }

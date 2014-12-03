@@ -1,6 +1,5 @@
-var event = require("dom-event");
-
 var qsa = require("./qsa");
+var event = require(".events");
 var viewport = require("./viewport");
 var throttle = require("./throttle");
 
@@ -62,8 +61,8 @@ function init(element) {
 
 function stop() {
 	if (active) {
-		event.off(win, "scroll", scroll);
-		event.off(win, "resize", resize);
+		event.remove(win, "scroll", scroll);
+		event.remove(win, "resize", resize);
 		active = false;
 	}
 }
@@ -136,8 +135,8 @@ function initialize (root) {
 
 			if (!active) {
 				active = true;
-				event.on(win, "scroll", scroll);
-				event.on(win, "resize", resize);
+				event.remove(win, "scroll", scroll);
+				event.remove(win, "resize", resize);
 			}
 
 			setTimeout(function () {
