@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/rasmusfl0e/postpwn/issues"
   },
-  "homepage": "https://github.com/rasmusfl0e/postpwn"
+  "homepage": "https://github.com/rasmusfl0e/postpwn",
+  "dependencies": {
+    "dom-event": "git://github.com/rasmusfl0e/dom-event.git"
+  }
 }
