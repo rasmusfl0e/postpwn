@@ -62,8 +62,8 @@ function init(element) {
 
 function stop() {
 	if (active) {
-		event.off(win, "scroll", setAndStartCheck);
-		event.off(win, "resize", updateAndCheck);
+		event.off(win, "scroll", scroll);
+		event.off(win, "resize", resize);
 		active = false;
 	}
 }
