@@ -7,9 +7,10 @@ module.exports = function (func) {
 	function timeout () {
 		timer = clearTimeout(timer);
 		delay = (base + (+new Date) - last) / 2;
+
 		if (fire) {
-			func();
 			fire = false;
+			func();
 		}
 	}
 
