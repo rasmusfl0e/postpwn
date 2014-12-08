@@ -1,19 +1,30 @@
 module.exports = function (func) {
 
-	var timer, lasttime;
+	var timer, last, fire;
 	var base = 16;
-	var delta = base;
+	var delay = base;
 
-	function fire () {
+	function timeout () {
 		timer = clearTimeout(timer);
-		delta = base / 2 + (new Date() - lasttime) / 2;
+		delay = (base + (+new Date) - last) / 2;
+		if (fire) {
+			func();
+			fire = false;
+		}
 	}
 
 	return function () {
 		if (!timer) {
-			lasttime = new Date();
-			timer = setTimeout(fire, delta);
+			var now = +new Date;
+			if (last && last + delay < now) {
+				delay = base;
+			}
+			last = now;
+			timer = setTimeout(timeout, delay);
 			func();
+		}
+		else if (!fire) {
+			fire = true;
 		}
 	};
 
