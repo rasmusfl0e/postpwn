@@ -3,7 +3,7 @@ postpwn
 
 Postpone initialization of components until they are in the viewport.
 
-Make plugins (consisting of a name, selector and an init function) and register them on the `postpwn` object.
+Make plugins and register them on the `postpwn` object.
 
 **NB:** Does not handle horizontal scrolling.
 
@@ -11,30 +11,57 @@ Make plugins (consisting of a name, selector and an init function) and register 
 
 	var postpwn = require("postpwn");
 
-	postpwn.register("is-my-div-in-view", ".my-div", function (element) {
-		element.className += " in-view";
+	postpwn.register("is-my-div-in-view", {
+		selector: ".my-div",
+		threshold: 800,
+		init: function (element) {
+			element.className += " in-view";
+		}
 	});
 
 ### Methods
 
 #### register
-Register a plugin to handle elements that match a selector via an init function.
+Register a plugin to handle elements that enter the viewport.
 
 ##### Arguments
 
 * `name` (string) - Name of the plugin.
-* `selector` (string) - The selector that matches elements that should be controlled by the plugin.
-* `init` (function) - The init function that handles elements when they become visible in the viewport.
-   The `init` function is passed a single argument:
-   * `element` (Element) - The element that has come into view.
+* `config`
+   * `selector` (string) - Optional. The selector that matches elements that should be controlled by the plugin.
+   * `threshold` (number) - Optional. Trigger the init function this number of pixels before becoming visible in the viewport. Default is `0`.  
+   * `init` (function) - The init function that handles elements when they become visible in the viewport.
+      The `init` function is passed a single argument:
+      * `element` (Element) - The element that has come into view.
 
-#### initialize
-Used for adding dynamically added areas of the DOM to the pool of elements handled by the registered `postpwn` plugins. 
+#### add
+Add elements to be controlled by a plugin.
 
 ##### Arguments
 
-* `element` (Element) - Optional. The root of the added DOM elements to be initialized. Default value is `document`.
+* `type` (string) - Name of the plugin to control the added elements.
+* `elements` (array-like object with elements) - The elements to be added.
+
+
+##### remove
+If elements that are handled by a plugin is removed from the DOM
+
+* `elements` (array-like object with elements) - The elements to be removed.
 
 
 ## Browser support
 Evergreen browsers and IE8 (provided you include [ES5-shim](https://github.com/es-shims/es5-shim/)).
+
+## Changelog
+
+
+### 1.5.0
+
+Changes
+
+* The `selector` and `init` arguments for `register` are now accepted as part of `config`.
+* Deprecated `initialize`.
+
+Features
+
+* Added `add` and `remove`.
