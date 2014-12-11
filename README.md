@@ -28,7 +28,7 @@ Register a plugin to handle elements that enter the viewport.
 
 * `name` (string) - Name of the plugin.
 * `config`
-   * `selector` (string) - Optional. The selector that matches elements that should be controlled by the plugin.
+   * `selector` (string) - Optional. A selector that matches elements that should be controlled by the plugin. If supplied 
    * `threshold` (number) - Optional. Trigger the init function this number of pixels before becoming visible in the viewport. Default is `0`.  
    * `init` (function) - The init function that handles elements when they become visible in the viewport.
       The `init` function is passed a single argument:
@@ -40,13 +40,15 @@ Add elements to be controlled by a plugin.
 ##### Arguments
 
 * `type` (string) - Name of the plugin to control the added elements.
-* `elements` (array-like object with elements) - The elements to be added.
+* `elements` (Element or array-like object with elements) - Optional. The elements to be added. If no elements are supplied and the plugin has `selector` defined - it will look for new elements matching this and add them.
 
 
-##### remove
-If elements that are handled by a plugin is removed from the DOM
+#### remove
+Remove elements that are being controlled by a plugin when removed from the DOM.
 
-* `elements` (array-like object with elements) - The elements to be removed.
+##### Arguments
+
+* `elements` (Element or array-like object with elements) - The elements to be removed.
 
 
 ## Browser support
@@ -54,6 +56,11 @@ Evergreen browsers and IE8 (provided you include [ES5-shim](https://github.com/e
 
 ## Changelog
 
+### 1.6.0
+
+Changes
+
+* `add`: If `elements` are not supplied and the plugin has a `selector` defined - that is used to find new elements.
 
 ### 1.5.0
 

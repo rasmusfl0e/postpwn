@@ -6,19 +6,19 @@ var throttle = require("./throttle");
 var win = window;
 var doc = document;
 
-var viewportOffset = 0;
-var viewportHeight = 0;
-var active = false;
-var data = [];
-var plugins = {};
-var elements = [];
-var checkThrottled = throttle(check);
+var viewportOffset = 0; // Cached scroll offset.
+var viewportHeight = 0; // Cached viewport height.
+var active = false; // Is postpwn active.
+var data = []; // Data relating to controlled elements.
+var plugins = {}; // Plugin data.
+var elements = []; // Controlled elements.
+var checkThrottled = throttle(check); // Dynamically throttled check function.
 
-
+// Initiate postpwn.
 function start () {
 	if (elements.length) {
 
-		// for clients that do not support lazyloading
+		// For clients that do not support scrollevents
 		if (win.operamini) {
 			elements.forEach(replace);
 		}
@@ -41,6 +41,7 @@ function start () {
 	}
 }
 
+// When no more elements are being controlled - wind down postpwn.
 function stop() {
 	if (active) {
 		events.remove(win, "scroll", scroll);
@@ -49,17 +50,20 @@ function stop() {
 	}
 }
 
+// On resize layout needs to be recalculated and rechecked.
 function resize () {
 	viewportHeight = viewport.height();
 	update();
-	check();
+	checkThrottled();
 }
 
+// On scroll only offset needs to be updated - and check run.
 function scroll () {
 	viewportOffset = viewport.offset();
 	checkThrottled();
 }
 
+// Register plugins and start postpwn.
 function register (name, config) {
 	var plugin = {
 		type: name,
@@ -74,6 +78,7 @@ function register (name, config) {
 	start();
 }
 
+// Update position data when layout has changed on resize.
 function update() {
 	var i = 0;
 	var l = elements.length;
@@ -91,13 +96,17 @@ function update() {
 	}
 }
 
+// Runs through array of controlled elements
+// to check whether they are visible in viewport.
 function check() {
 	var i = 0;
 	var l = elements.length;
 
+	// No more elements - shut postpwn down.
 	if (!l) {
 		stop();
 	}
+	// Find visible elements.
 	else {
 		var visible = [];
 		var top = viewportOffset;
@@ -119,6 +128,7 @@ function check() {
 			i++;
 		}
 
+		// Loop in reverse to keep indexes intact.
 		l = visible.length;
 		while (l--) {
 			init(visible[l]);
@@ -126,6 +136,9 @@ function check() {
 	}
 }
 
+// Once a controlled element becomes visible in the viewport
+// `init` runs it through the plugin's `init` function
+// and removes it from `elements`.
 function init(element) {
 	var index = elements.indexOf(element);
 	if (index > -1) {
@@ -134,7 +147,19 @@ function init(element) {
 	}
 }
 
+// Adds supplied `elements` to be controlled by plugin `type`
+// - or find them via plugin `selector`.
 function add (type, elements) {
+	// If `elements` is omitted select elements via plugin `selector` if defined.
+	if (!elements) {
+		if(plugins[type].selector) {
+			elements = qsa(plugins[type].selector, doc);
+		}
+		else {
+			return;
+		}
+	}
+	// Must be a single element if not an array-like object.
 	if (!("length" in elements)) {
 		addElement(type, elements);
 	}
@@ -146,9 +171,11 @@ function add (type, elements) {
 	start();
 }
 
+// Add a single element to be controlled by a given plugin `type`.
 function addElement (type, element) {
 	var plugin = plugins[type];
 	var index = elements.indexOf(element);
+	// Only add unhandled elements.
 	if (index < 0) {
 		index = elements.length;
 		data[index] = {
@@ -160,7 +187,9 @@ function addElement (type, element) {
 	return index;
 }
 
+// Remove elements from the controlled elements.
 function remove (elements) {
+	// Must be a single element if not an array-like object.
 	if (!("length" in elements)) {
 		removeElement(elements);
 	}
@@ -170,6 +199,7 @@ function remove (elements) {
 	}
 }
 
+// Remove single element from controlled eleemnts.
 function removeElement (element) {
 	index = elements.indexOf(element);
 	if (index > -1) {

@@ -1,3 +1,5 @@
+// Functions for getting crossbrowser viewport dimensions.
+
 var win = window;
 var doc = document;
 var html = doc.documentElement;

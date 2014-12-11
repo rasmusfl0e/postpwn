@@ -1,3 +1,6 @@
+// A function that adds that wraps `func` and adds dynamic throttling.
+// Useful for events that fire rapidly like onscroll and onresize. 
+
 module.exports = function (func) {
 
 	var timer, last, fire;

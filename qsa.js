@@ -1,13 +1,20 @@
+// Simplify crossbrowser QSA
+
 var slice = Array.prototype.slice;
 
+// Returns an array of elements.
 function qsa (selector, root) {
 	return slice.call((root || document).querySelectorAll(selector));
 }
 
 try {
+	// Test qsa.
 	qsa("html");
 }
 catch (e) {
+	// For browser that don't support `slice.call` (IE8). 
+	// Make a longform function that manually creates
+	// an array of elements.
 	function qsa (selector, root) {
 		var nodes = (root || document).querySelectorAll(selector);
 		var elements = [];
