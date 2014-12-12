@@ -3,7 +3,7 @@ postpwn
 
 Postpone initialization of components until they are in the viewport.
 
-Make plugins and register them on the `postpwn` object.
+Make `postpwn` plugins and register them on the  object.
 
 **NB:** Does not handle horizontal scrolling.
 
@@ -11,7 +11,7 @@ Make plugins and register them on the `postpwn` object.
 
 	var postpwn = require("postpwn");
 
-	postpwn.register("is-my-div-in-view", {
+	var myPlugin = postpwn("is-my-div-in-view", {
 		selector: ".my-div",
 		threshold: 800,
 		init: function (element) {
@@ -19,10 +19,21 @@ Make plugins and register them on the `postpwn` object.
 		}
 	});
 
-### Methods
+	// Manually add elements
 
-#### register
-Register a plugin to handle elements that enter the viewport.
+	var anotherDiv = document.querySelector(".anotherDiv");
+	myPlugin.add(anotherDiv);
+
+	// Manually remove elements
+
+	myPlugin.remove(anotherDiv);
+	anotherDiv.parentNode.removeChild(anotherDiv);
+
+## API
+
+### postpwn
+Create - or retrieve - a plugin to handle elements that enter the viewport.
+You can retrieve a plugin by only passing the plugin `name`.
 
 ##### Arguments
 
@@ -34,16 +45,25 @@ Register a plugin to handle elements that enter the viewport.
       The `init` function is passed a single argument:
       * `element` (Element) - The element that has come into view.
 
-#### add
+##### Returns
+A postpwn plugin.
+
+
+### postpwn.update
+Can be called to refresh the cached positions of controlled elements if your layout changes (onresize is handled automatically).
+
+
+### postpwn plugin methods
+
+#### [plugin].add
 Add elements to be controlled by a plugin.
 
 ##### Arguments
 
-* `type` (string) - Name of the plugin to control the added elements.
-* `elements` (Element or array-like object with elements) - Optional. The elements to be added. If no elements are supplied and the plugin has `selector` defined - it will look for new elements matching this and add them.
+* `elements` (Element or array-like object with elements) - Optional. The elements to be added. If no elements are supplied and the plugin has `selector` defined in its config - it will look for new elements matching this and add them.
 
 
-#### remove
+#### [plugin].remove
 Remove elements that are being controlled by a plugin when removed from the DOM.
 
 ##### Arguments
@@ -55,6 +75,12 @@ Remove elements that are being controlled by a plugin when removed from the DOM.
 Evergreen browsers and IE8 (provided you include [ES5-shim](https://github.com/es-shims/es5-shim/)).
 
 ## Changelog
+
+### 2.0.0
+
+Changes
+
+* 
 
 ### 1.6.0
 

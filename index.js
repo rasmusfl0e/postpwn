@@ -63,20 +63,73 @@ function scroll () {
 	checkThrottled();
 }
 
-// Register plugins and start postpwn.
-function register (name, config) {
-	var plugin = {
-		type: name,
-		selector: config.selector,
-		init: config.init,
-		threshold: config.threshold || 0
-	};
-	plugins[name] = plugin;
-	if (plugin.selector) {
-		add(plugin.type, qsa(plugin.selector, doc));
+// Create/get plugin and start postpwn.
+function plugin (name, config) {
+	var plugin;
+
+	if (name in plugins) {
+		
+		plugin = plugins[name];
+
+		if (config) {
+			Object.keys(config).forEach(function (key) {
+				plugin.config[key] = config[key];
+			});
+		}
 	}
-	start();
+	else {
+
+		plugin = new Plugin(name, config);
+
+		plugins[name] = plugin;
+
+		if (plugin.config.selector) {
+			add(plugin.name, qsa(plugin.config.selector, doc));
+		}
+		
+		start();
+
+	}
+
+	return plugin;
 }
+
+function Plugin (name, config) {
+	this.name = name;
+	this.config = config;
+	if (!("threshold" in this.config)) {
+		this.config.threshold = 0;
+	}
+}
+
+Plugin.prototype.add = function (/*elements*/) {
+	var elements = (arguments.length === 0 && this.config.selector) ? qsa(this.config.selector, doc) : splat(arguments);
+	add(this.name, elements);
+	return this;
+};
+
+Plugin.prototype.remove = function (/*elements*/) {
+	var elements = splat(arguments)
+	remove(elements);
+	return this;
+};
+
+// Turn args into array of elements
+function splat (args) {
+	var elements = [];
+
+	switch (args.length) {
+		case 0:
+			break;
+		case 1:
+			elements = ("nodeType" in args[0]) ? [args] : args;
+		default:
+			elements = args;
+			break;
+	}
+
+	return elements;
+} 
 
 // Update position data when layout has changed on resize.
 function update() {
@@ -142,45 +195,32 @@ function check() {
 function init(element) {
 	var index = elements.indexOf(element);
 	if (index > -1) {
-		plugins[data[index].type].init(element);
+		plugins[data[index].name].config.init(element);
 		removeElement(element);
 	}
 }
 
 // Adds supplied `elements` to be controlled by plugin `type`
 // - or find them via plugin `selector`.
-function add (type, elements) {
-	// If `elements` is omitted select elements via plugin `selector` if defined.
-	if (!elements) {
-		if(plugins[type].selector) {
-			elements = qsa(plugins[type].selector, doc);
-		}
-		else {
-			return;
-		}
-	}
-	// Must be a single element if not an array-like object.
-	if (!("length" in elements)) {
-		addElement(type, elements);
-	}
+function add (name, elements) {
 	var i = 0;
 	var l = elements.length;
 	while (i < l) {
-		addElement(type, elements[i++]);
+		addElement(name, elements[i++]);
 	}
 	start();
 }
 
 // Add a single element to be controlled by a given plugin `type`.
-function addElement (type, element) {
-	var plugin = plugins[type];
+function addElement (name, element) {
+	var plugin = plugins[name];
 	var index = elements.indexOf(element);
 	// Only add unhandled elements.
 	if (index < 0) {
 		index = elements.length;
 		data[index] = {
-			type: type,
-			threshold: plugin.threshold
+			name: name,
+			threshold: plugin.config.threshold
 		};
 		elements.push(element);
 	}
@@ -189,10 +229,6 @@ function addElement (type, element) {
 
 // Remove elements from the controlled elements.
 function remove (elements) {
-	// Must be a single element if not an array-like object.
-	if (!("length" in elements)) {
-		removeElement(elements);
-	}
 	var i = elements.length;
 	while (i--) {
 		removeElement(elements[i]);
@@ -209,8 +245,5 @@ function removeElement (element) {
 	return index;
 }
 
-module.exports = {
-	add: add,
-	remove: remove,
-	register: register
-};
+module.exports = plugin;
+module.exports.update = onresize;
