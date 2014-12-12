@@ -1,9 +1,15 @@
 postpwn
 =======
 
-Postpone initialization of components until they are in the viewport.
+> Postpone initialization of components until they are in the viewport.
 
-**NB:** Does not handle horizontal scrolling.
+* Create plugins to handle elements coming into view.
+* Configurable `threshold` for visibility.
+* Automatically find elements via `selector` optionally.
+* Uses dynamic throttling when checking visibility to avoid choking.
+* Caches positions of elements to avoid DOM access.
+* Supports evergreen browsers and IE8 (provided you include [ES5-shim](https://github.com/es-shims/es5-shim/)).
+* *NB*: Only handles vertical scrolling.
 
 ## Usage
 
@@ -70,9 +76,6 @@ Remove elements that are being controlled by a plugin when removed from the DOM.
 
 * `elements` (Element or array-like object with elements) - The elements to be removed.
 
-
-## Browser support
-Evergreen browsers and IE8 (provided you include [ES5-shim](https://github.com/es-shims/es5-shim/)).
 
 ## Changelog
 
