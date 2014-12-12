@@ -80,7 +80,7 @@ Evergreen browsers and IE8 (provided you include [ES5-shim](https://github.com/e
 
 Changes
 
-* 
+* The API is now exposed as a factory that creates plugins.
 
 ### 1.6.0
 
