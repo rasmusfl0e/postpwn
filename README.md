@@ -3,13 +3,13 @@ postpwn
 
 Postpone initialization of components until they are in the viewport.
 
-Make `postpwn` plugins and register them on the  object.
-
 **NB:** Does not handle horizontal scrolling.
 
 ## Usage
 
 	var postpwn = require("postpwn");
+
+	// Create a usecase-specific plugin to handle certains elements.
 
 	var myPlugin = postpwn("is-my-div-in-view", {
 		selector: ".my-div",
@@ -19,12 +19,12 @@ Make `postpwn` plugins and register them on the  object.
 		}
 	});
 
-	// Manually add elements
+	// Manually add elements.
 
 	var anotherDiv = document.querySelector(".anotherDiv");
 	myPlugin.add(anotherDiv);
 
-	// Manually remove elements
+	// Manually remove elements.
 
 	myPlugin.remove(anotherDiv);
 	anotherDiv.parentNode.removeChild(anotherDiv);
