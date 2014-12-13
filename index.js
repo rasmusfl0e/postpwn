@@ -1,4 +1,3 @@
-var qsa = require("./qsa");
 var events = require("./events");
 var viewport = require("./viewport");
 var throttle = require("./throttle");
@@ -84,7 +83,7 @@ function plugin (name, config) {
 		plugins[name] = plugin;
 
 		if (plugin.config.selector) {
-			add(plugin.name, qsa(plugin.config.selector, doc));
+			add(plugin.name, doc.querySelectorAll(plugin.config.selector));
 		}
 		
 		start();
@@ -103,7 +102,13 @@ function Plugin (name, config) {
 }
 
 Plugin.prototype.add = function (/*elements*/) {
-	var elements = (arguments.length === 0 && this.config.selector) ? qsa(this.config.selector, doc) : splat(arguments);
+	var elements;
+	if (arguments.length === 0 && this.config.selector) {
+		elements = doc.querySelectorAll(this.config.selector);
+	}
+	else {
+		elements = splat(arguments);
+	}
 	add(this.name, elements);
 	return this;
 };
