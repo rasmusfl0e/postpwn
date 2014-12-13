@@ -9,6 +9,7 @@ postpwn
 * Uses dynamic throttling when checking visibility to avoid choking.
 * Caches positions of elements to avoid DOM access.
 * Supports evergreen browsers and IE8 (provided you include [ES5-shim](https://github.com/es-shims/es5-shim/)).
+* No library dependencies.
 * *NB*: Only handles vertical scrolling.
 
 ## Usage
