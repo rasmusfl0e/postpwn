@@ -14,6 +14,7 @@ postpwn
 
 ## Usage
 
+```js
 	var postpwn = require("postpwn");
 
 	// Create a usecase-specific plugin to handle certains elements.
@@ -35,6 +36,7 @@ postpwn
 
 	myPlugin.remove(anotherDiv);
 	anotherDiv.parentNode.removeChild(anotherDiv);
+```
 
 ## API
 
