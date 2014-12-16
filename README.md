@@ -15,27 +15,27 @@ postpwn
 ## Usage
 
 ```js
-	var postpwn = require("postpwn");
+var postpwn = require("postpwn");
 
-	// Create a usecase-specific plugin to handle certains elements.
+// Create a usecase-specific plugin to handle certains elements.
 
-	var myPlugin = postpwn("is-my-div-in-view", {
-		selector: ".my-div",
-		threshold: 800,
-		init: function (element) {
-			element.className += " in-view";
-		}
-	});
+var myPlugin = postpwn("is-my-div-in-view", {
+	selector: ".my-div",
+	threshold: 800,
+	init: function (element) {
+		element.className += " in-view";
+	}
+});
 
-	// Manually add elements.
+// Manually add elements.
 
-	var anotherDiv = document.querySelector(".anotherDiv");
-	myPlugin.add(anotherDiv);
+var anotherDiv = document.querySelector(".anotherDiv");
+myPlugin.add(anotherDiv);
 
-	// Manually remove elements.
+// Manually remove elements.
 
-	myPlugin.remove(anotherDiv);
-	anotherDiv.parentNode.removeChild(anotherDiv);
+myPlugin.remove(anotherDiv);
+anotherDiv.parentNode.removeChild(anotherDiv);
 ```
 
 ## API
