@@ -3,6 +3,8 @@ postpwn
 
 > Postpone initialization of components until they are in the viewport.
 
+## Features
+
 * Create plugins to handle elements coming into view.
 * Configurable `threshold` for visibility.
 * Automatically find elements via `selector` optionally.
@@ -10,7 +12,8 @@ postpwn
 * Caches positions of elements to avoid DOM access.
 * Supports evergreen browsers and IE8 (provided you include [ES5-shim](https://github.com/es-shims/es5-shim/)).
 * No library dependencies.
-* *NB*: Only handles vertical scrolling.
+
+*NB*: Only handles vertical scrolling.
 
 ## Usage
 
