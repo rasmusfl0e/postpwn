@@ -19,7 +19,7 @@ var postpwn = require("postpwn");
 
 // Create a usecase-specific plugin to handle certains elements.
 
-var myPlugin = postpwn("is-my-div-in-view", {
+var myPlugin = postpwn({
 	selector: ".my-div",
 	threshold: 800,
 	init: function (element) {
@@ -41,12 +41,10 @@ anotherDiv.parentNode.removeChild(anotherDiv);
 ## API
 
 ### postpwn
-Create - or retrieve - a plugin to handle elements that enter the viewport.
-You can retrieve a plugin by only passing the plugin `name`.
+Create a plugin to handle elements that enter the viewport.
 
 ##### Arguments
 
-* `name` (string) - Name of the plugin.
 * `config`
    * `selector` (string) - Optional. A selector that matches elements that should be controlled by the plugin. If supplied 
    * `threshold` (number) - Optional. Trigger the init function this number of pixels before becoming visible in the viewport. Default is `0`.  
@@ -81,6 +79,12 @@ Remove elements that are being controlled by a plugin when removed from the DOM.
 
 
 ## Changelog
+
+### 3.0.0
+
+Changes
+
+* Drop `name` argument from plugin creation.
 
 ### 2.0.0
 

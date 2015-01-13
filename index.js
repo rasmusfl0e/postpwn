@@ -1,6 +1,8 @@
 var events = require("./events");
+var uniqueId = require("./uniqueId");
 var viewport = require("./viewport");
 var throttle = require("./throttle");
+var toElements = require("./toElements");
 
 var win = window;
 var doc = document;
@@ -62,39 +64,24 @@ function scroll () {
 	checkThrottled();
 }
 
-// Create/get plugin and start postpwn.
-function plugin (name, config) {
-	var plugin;
+// Create plugin and start postpwn.
+function plugin (config) {
+	var id = uniqueId();
+	var plugin = new Plugin(id, config);
 
-	if (name in plugins) {
-		
-		plugin = plugins[name];
+	plugins[id] = plugin;
 
-		if (config) {
-			Object.keys(config).forEach(function (key) {
-				plugin.config[key] = config[key];
-			});
-		}
+	if (plugin.config.selector) {
+		add(plugin.id, doc.querySelectorAll(plugin.config.selector));
 	}
-	else {
-
-		plugin = new Plugin(name, config);
-
-		plugins[name] = plugin;
-
-		if (plugin.config.selector) {
-			add(plugin.name, doc.querySelectorAll(plugin.config.selector));
-		}
-		
-		start();
-
-	}
+	
+	start();
 
 	return plugin;
 }
 
-function Plugin (name, config) {
-	this.name = name;
+function Plugin (id, config) {
+	this.id = id;
 	this.config = config;
 	if (!("threshold" in this.config)) {
 		this.config.threshold = 0;
@@ -107,34 +94,19 @@ Plugin.prototype.add = function (/*elements*/) {
 		elements = doc.querySelectorAll(this.config.selector);
 	}
 	else {
-		elements = splat(arguments);
+		elements = toElements(arguments);
 	}
-	add(this.name, elements);
+	add(this.id, elements);
 	return this;
 };
 
 Plugin.prototype.remove = function (/*elements*/) {
-	var elements = splat(arguments)
+	var elements = toElements(arguments)
 	remove(elements);
 	return this;
 };
 
-// Turn args into array of elements
-function splat (args) {
-	var elements = [];
 
-	switch (args.length) {
-		case 0:
-			break;
-		case 1:
-			elements = ("nodeType" in args[0]) ? [args] : args;
-		default:
-			elements = args;
-			break;
-	}
-
-	return elements;
-} 
 
 // Update position data when layout has changed on resize.
 function update() {
@@ -200,31 +172,31 @@ function check() {
 function init(element) {
 	var index = elements.indexOf(element);
 	if (index > -1) {
-		plugins[data[index].name].config.init(element);
+		plugins[data[index].id].config.init(element);
 		removeElement(element);
 	}
 }
 
-// Adds supplied `elements` to be controlled by plugin `type`
+// Adds supplied `elements` to be controlled by plugin `id`
 // - or find them via plugin `selector`.
-function add (name, elements) {
+function add (id, elements) {
 	var i = 0;
 	var l = elements.length;
 	while (i < l) {
-		addElement(name, elements[i++]);
+		addElement(id, elements[i++]);
 	}
 	start();
 }
 
-// Add a single element to be controlled by a given plugin `type`.
-function addElement (name, element) {
-	var plugin = plugins[name];
+// Add a single element to be controlled by a given plugin `id`.
+function addElement (id, element) {
+	var plugin = plugins[id];
 	var index = elements.indexOf(element);
 	// Only add unhandled elements.
 	if (index < 0) {
 		index = elements.length;
 		data[index] = {
-			name: name,
+			id: id,
 			threshold: plugin.config.threshold
 		};
 		elements.push(element);
