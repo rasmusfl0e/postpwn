@@ -17,6 +17,6 @@ function generate (length) {
 	pool.push(id);
 
 	return id;
-};
+}
 
 module.exports = generate;

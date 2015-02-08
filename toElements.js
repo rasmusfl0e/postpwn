@@ -8,6 +8,7 @@ module.exports = function (args) {
 			break;
 		case 1:
 			elements = ("nodeType" in args[0]) ? [args] : args;
+			break;
 		default:
 			elements = args;
 			break;
