@@ -65,7 +65,7 @@ function scroll () {
 }
 
 // Create plugin and start postpwn.
-function plugin (config) {
+function factory (config) {
 	var id = uniqueId();
 	var plugin = new Plugin(id, config);
 
@@ -101,7 +101,7 @@ Plugin.prototype.add = function (/*elements*/) {
 };
 
 Plugin.prototype.remove = function (/*elements*/) {
-	var elements = toElements(arguments)
+	var elements = toElements(arguments);
 	remove(elements);
 	return this;
 };
@@ -110,13 +110,13 @@ Plugin.prototype.remove = function (/*elements*/) {
 
 // Update position data when layout has changed on resize.
 function update() {
-	var i = 0;
-	var l = elements.length;
 	var element, rect, top, d;
+	var l = elements.length;
+	var i = 0;
 
 	while (i < l) {
 		element = elements[i];
-		var d = data[i];
+		d = data[i];
 		if (element && d) {
 			rect = element.getBoundingClientRect();
 			d.top = viewportOffset + rect.top - d.threshold;
@@ -129,8 +129,8 @@ function update() {
 // Runs through array of controlled elements
 // to check whether they are visible in viewport.
 function check() {
-	var i = 0;
 	var l = elements.length;
+	var i = 0;
 
 	// No more elements - shut postpwn down.
 	if (!l) {
@@ -180,8 +180,8 @@ function init(element) {
 // Adds supplied `elements` to be controlled by plugin `id`
 // - or find them via plugin `selector`.
 function add (id, elements) {
-	var i = 0;
 	var l = elements.length;
+	var i = 0;
 	while (i < l) {
 		addElement(id, elements[i++]);
 	}
@@ -222,5 +222,5 @@ function removeElement (element) {
 	return index;
 }
 
-module.exports = plugin;
+module.exports = factory;
 module.exports.update = onresize;

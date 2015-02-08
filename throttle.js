@@ -9,7 +9,7 @@ module.exports = function (func) {
 
 	function timeout () {
 		timer = clearTimeout(timer);
-		delay = (base + (+new Date) - last) / 2;
+		delay = (base + (new Date()).valueOf() - last) / 2;
 
 		if (fire) {
 			fire = false;
@@ -19,7 +19,7 @@ module.exports = function (func) {
 
 	return function () {
 		if (!timer) {
-			var now = +new Date;
+			var now = (new Date()).valueOf();
 			if (last && last + delay < now) {
 				delay = base;
 			}
