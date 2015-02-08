@@ -111,51 +111,51 @@ Plugin.prototype.remove = function (/*elements*/) {
 // Update position data when layout has changed on resize.
 function update() {
 	var element, rect, top, d;
-	var l = elements.length;
-	var i = 0;
+	var length = elements.length;
+	var index = 0;
 
-	while (i < l) {
-		element = elements[i];
-		d = data[i];
+	while (index < length) {
+		element = elements[index];
+		d = data[index];
 		if (element && d) {
 			rect = element.getBoundingClientRect();
 			d.top = viewportOffset + rect.top - d.threshold;
 			d.bottom = viewportOffset + rect.bottom + d.threshold;
 		}
-		i++;
+		index++;
 	}
 }
 
 // Runs through array of controlled elements
 // to check whether they are visible in viewport.
 function check() {
-	var l = elements.length;
-	var i = 0;
+	var length = elements.length;
+	var index = 0;
 
 	// Find visible elements.
-	if (l) {
+	if (length) {
 		var visible = [];
-		var top = viewportOffset;
-		var bottom = viewportOffset + viewportHeight;
-		var d, element, elementTop, elementBottom;
+		var viewTop = viewportOffset;
+		var viewBottom = viewportOffset + viewportHeight;
+		var d, element, top, bottom;
 
-		while (i < l) {
-			element = elements[i];
-			d = data[i];
+		while (index < length) {
+			element = elements[index];
+			d = data[index];
 			if (element && d) {
-				elementTop = d.top;
-				elementBottom = d.bottom;
-				if ((elementTop < top && elementBottom > bottom) || (elementTop >= top && elementTop <= bottom) || (elementBottom >= top && elementBottom <= bottom)) {
+				top = d.top;
+				bottom = d.bottom;
+				if ((top < viewTop && bottom > viewBottom) || (top >= viewTop && top <= viewBottom) || (bottom >= viewTop && bottom <= viewBottom)) {
 					visible.push(element);
 				}
 			}
-			i++;
+			index++;
 		}
 
 		// Loop in reverse to keep indexes intact.
-		l = visible.length;
-		while (l--) {
-			init(visible[l]);
+		index = visible.length;
+		while (index--) {
+			init(visible[index]);
 		}
 	}
 	// No more elements - shut postpwn down.
@@ -178,10 +178,10 @@ function init(element) {
 // Adds supplied `elements` to be controlled by plugin `id`
 // - or find them via plugin `selector`.
 function add (id, elements) {
-	var l = elements.length;
-	var i = 0;
-	while (i < l) {
-		addElement(id, elements[i++]);
+	var length = elements.length;
+	var index = 0;
+	while (index < length) {
+		addElement(id, elements[index++]);
 	}
 	start();
 }
@@ -204,9 +204,9 @@ function addElement (id, element) {
 
 // Remove elements from the controlled elements.
 function remove (elements) {
-	var i = elements.length;
-	while (i--) {
-		removeElement(elements[i]);
+	var index = elements.length;
+	while (index--) {
+		removeElement(elements[index]);
 	}
 }
 
