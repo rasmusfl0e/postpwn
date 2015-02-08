@@ -64,50 +64,6 @@ function scroll () {
 	checkThrottled();
 }
 
-// Create plugin and start postpwn.
-function factory (config) {
-	var id = uniqueId();
-	var plugin = new Plugin(id, config);
-
-	plugins[id] = plugin;
-
-	if (plugin.config.selector) {
-		add(plugin.id, doc.querySelectorAll(plugin.config.selector));
-	}
-	
-	start();
-
-	return plugin;
-}
-
-function Plugin (id, config) {
-	this.id = id;
-	this.config = config;
-	if (!("threshold" in this.config)) {
-		this.config.threshold = 0;
-	}
-}
-
-Plugin.prototype.add = function (/*elements*/) {
-	var elements;
-	if (arguments.length === 0 && this.config.selector) {
-		elements = doc.querySelectorAll(this.config.selector);
-	}
-	else {
-		elements = toElements(arguments);
-	}
-	add(this.id, elements);
-	return this;
-};
-
-Plugin.prototype.remove = function (/*elements*/) {
-	var elements = toElements(arguments);
-	remove(elements);
-	return this;
-};
-
-
-
 // Update position data when layout has changed on resize.
 function update() {
 	var element, rect, top, d;
@@ -174,6 +130,48 @@ function init(element) {
 		removeElement(element);
 	}
 }
+
+// Create plugin and start postpwn.
+function factory (config) {
+	var id = uniqueId();
+	var plugin = new Plugin(id, config);
+
+	plugins[id] = plugin;
+
+	if (plugin.config.selector) {
+		add(plugin.id, doc.querySelectorAll(plugin.config.selector));
+	}
+	
+	start();
+
+	return plugin;
+}
+
+function Plugin (id, config) {
+	this.id = id;
+	this.config = config;
+	if (!("threshold" in this.config)) {
+		this.config.threshold = 0;
+	}
+}
+
+Plugin.prototype.add = function (/*elements*/) {
+	var elements;
+	if (arguments.length === 0 && this.config.selector) {
+		elements = doc.querySelectorAll(this.config.selector);
+	}
+	else {
+		elements = toElements(arguments);
+	}
+	add(this.id, elements);
+	return this;
+};
+
+Plugin.prototype.remove = function (/*elements*/) {
+	var elements = toElements(arguments);
+	remove(elements);
+	return this;
+};
 
 // Adds supplied `elements` to be controlled by plugin `id`
 // - or find them via plugin `selector`.
