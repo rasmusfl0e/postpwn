@@ -132,12 +132,8 @@ function check() {
 	var l = elements.length;
 	var i = 0;
 
-	// No more elements - shut postpwn down.
-	if (!l) {
-		stop();
-	}
 	// Find visible elements.
-	else {
+	if (l) {
 		var visible = [];
 		var top = viewportOffset;
 		var bottom = viewportOffset + viewportHeight;
@@ -145,14 +141,12 @@ function check() {
 
 		while (i < l) {
 			element = elements[i];
-			if (element) {
-				d = data[i];
-				if (d) {
-					elementTop = d.top;
-					elementBottom = d.bottom;
-					if ((elementTop < top && elementBottom > bottom) || (elementTop >= top && elementTop <= bottom) || (elementBottom >= top && elementBottom <= bottom)) {
-						visible.push(element);
-					}
+			d = data[i];
+			if (element && d) {
+				elementTop = d.top;
+				elementBottom = d.bottom;
+				if ((elementTop < top && elementBottom > bottom) || (elementTop >= top && elementTop <= bottom) || (elementBottom >= top && elementBottom <= bottom)) {
+					visible.push(element);
 				}
 			}
 			i++;
@@ -163,6 +157,10 @@ function check() {
 		while (l--) {
 			init(visible[l]);
 		}
+	}
+	// No more elements - shut postpwn down.
+	else {
+		stop();
 	}
 }
 
