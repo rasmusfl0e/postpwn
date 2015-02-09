@@ -113,9 +113,9 @@ function check() {
 						data.onVisible(element, data);
 					}
 				}
-				// Element should trigger onHidden if available
 				else if (data.visible && !isVisible) {
 					data.visible = isVisible;
+					// Element should trigger onHidden if available
 					if (data.onHidden) {
 						data.onHidden(element, data);
 					}
