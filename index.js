@@ -65,7 +65,7 @@ function scroll () {
 
 // Update position data when layout has changed on resize.
 function update() {
-	var element, rect, top, data;
+	var element, rect, data;
 	var length = elements.length;
 	var index = 0;
 
@@ -89,9 +89,10 @@ function check() {
 
 	// Find visible elements.
 	if (length) {
+		var element, data, top, bottom, isVisible;
 		var viewTop = viewportOffset;
 		var viewBottom = viewportOffset + viewportHeight;
-		var element, data, top, bottom, isVisible;
+		var changed = [];
 
 		while (index < length) {
 			element = elements[index];
@@ -100,33 +101,46 @@ function check() {
 				top = data.top;
 				bottom = data.bottom;
 				isVisible = (top < viewTop && bottom > viewBottom) || (top >= viewTop && top <= viewBottom) || (bottom >= viewTop && bottom <= viewBottom);
-				// Element has come into view
-				if (!data.visible && isVisible) {
+				// Element visibility changed
+				if (data.visible !== isVisible) {
 					data.visible = isVisible;
-					// Element should trigger onInit if available
-					if (!data.initiated && data.onInit) {
-						data.onInit(element, data);
-						data.initiated = true;
-					}
-					// Element should trigger onVisible if available
-					else if (data.onVisible) {
-						data.onVisible(element, data);
-					}
-				}
-				else if (data.visible && !isVisible) {
-					data.visible = isVisible;
-					// Element should trigger onHidden if available
-					if (data.onHidden) {
-						data.onHidden(element, data);
-					}
+					changed.push([element, data]);
 				}
 			}
 			index++;
 		}
+
+		length = changed.length;
+		index = 0;
+		while (index < length) {
+			changeState.apply(null, changed[index++]);
+		}
+
 	}
 	// No more elements - shut postpwn down.
 	else {
 		stop();
+	}
+}
+
+function changeState (element, data) {
+	// Element has come into view
+	if (data.visible) {
+		// Element should trigger onInit if available
+		if (!data.initiated && data.onInit) {
+			data.onInit(element, data);
+			data.initiated = true;
+		}
+		// Element should trigger onVisible if available
+		else if (data.onVisible) {
+			data.onVisible(element, data);
+		}
+	}
+	else {
+		// Element should trigger onHidden if available
+		if (data.onHidden) {
+			data.onHidden(element, data);
+		}
 	}
 }
 
@@ -191,7 +205,7 @@ function addElement (id, element) {
 		index = elements.length;
 		elementData[index] = {
 			id: id,
-			visible: null,
+			visible: false,
 			initiated: false,
 			onInit: plugin.config.onInit || null,
 			onVisible: plugin.config.onVisible || null,
