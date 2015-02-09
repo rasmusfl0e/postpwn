@@ -5,11 +5,11 @@ module.exports = function (func) {
 
 	var timer, last, fire;
 	var base = 16;
-	var delay = base;
+	var interval = base;
 
 	function timeout () {
 		timer = clearTimeout(timer);
-		delay = (base + (new Date()).valueOf() - last) / 2;
+		interval = (base + (new Date()).valueOf() - last) / 2;
 
 		if (fire) {
 			fire = false;
@@ -20,11 +20,11 @@ module.exports = function (func) {
 	return function () {
 		if (!timer) {
 			var now = (new Date()).valueOf();
-			if (last && last + delay < now) {
-				delay = base;
+			if (last && last + interval < now) {
+				interval = base;
 			}
 			last = now;
-			timer = setTimeout(timeout, delay);
+			timer = setTimeout(timeout, interval);
 			func();
 		}
 		else if (!fire) {
