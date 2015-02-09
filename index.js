@@ -2,7 +2,6 @@ var events = require("./events");
 var uniqueId = require("./uniqueId");
 var viewport = require("./viewport");
 var throttle = require("./throttle");
-var toElements = require("./toElements");
 
 var win = window;
 var doc = document;
@@ -10,9 +9,9 @@ var doc = document;
 var viewportOffset = 0; // Cached scroll offset.
 var viewportHeight = 0; // Cached viewport height.
 var active = false; // Is postpwn active.
-var data = []; // Data relating to controlled elements.
 var plugins = {}; // Plugin data.
 var elements = []; // Controlled elements.
+var elementData = []; // Data relating to controlled elements.
 var checkThrottled = throttle(check); // Dynamically throttled check function.
 
 // Initiate postpwn.
@@ -64,6 +63,73 @@ function scroll () {
 	checkThrottled();
 }
 
+// Update position data when layout has changed on resize.
+function update() {
+	var element, rect, top, data;
+	var length = elements.length;
+	var index = 0;
+
+	while (index < length) {
+		element = elements[index];
+		data = elementData[index];
+		if (element && data) {
+			rect = element.getBoundingClientRect();
+			data.top = viewportOffset + rect.top - data.threshold;
+			data.bottom = viewportOffset + rect.bottom + data.threshold;
+		}
+		index++;
+	}
+}
+
+// Runs through array of controlled elements
+// to check whether they are visible in viewport.
+function check() {
+	var length = elements.length;
+	var index = 0;
+
+	// Find visible elements.
+	if (length) {
+		var viewTop = viewportOffset;
+		var viewBottom = viewportOffset + viewportHeight;
+		var element, data, top, bottom, isVisible;
+
+		while (index < length) {
+			element = elements[index];
+			data = elementData[index];
+			if (element && data) {
+				top = data.top;
+				bottom = data.bottom;
+				isVisible = (top < viewTop && bottom > viewBottom) || (top >= viewTop && top <= viewBottom) || (bottom >= viewTop && bottom <= viewBottom);
+				// Element has come into view
+				if (!data.visible && isVisible) {
+					data.visible = isVisible;
+					// Element should trigger onInit if available
+					if (!data.initiated && data.onInit) {
+						data.onInit(element, data);
+						data.initiated = true;
+					}
+					// Element should trigger onVisible if available
+					else if (data.onVisible) {
+						data.onVisible(element, data);
+					}
+				}
+				// Element should trigger onHidden if available
+				else if (data.visible && !isVisible) {
+					data.visible = isVisible;
+					if (data.onHidden) {
+						data.onHidden(element, data);
+					}
+				}
+			}
+			index++;
+		}
+	}
+	// No more elements - shut postpwn down.
+	else {
+		stop();
+	}
+}
+
 // Create plugin and start postpwn.
 function factory (config) {
 	var id = uniqueId();
@@ -94,96 +160,24 @@ Plugin.prototype.add = function (/*elements*/) {
 		elements = doc.querySelectorAll(this.config.selector);
 	}
 	else {
-		elements = toElements(arguments);
+		elements = arguments;
 	}
 	add(this.id, elements);
 	return this;
 };
 
 Plugin.prototype.remove = function (/*elements*/) {
-	var elements = toElements(arguments);
-	remove(elements);
+	remove(arguments);
 	return this;
 };
-
-
-
-// Update position data when layout has changed on resize.
-function update() {
-	var element, rect, top, d;
-	var l = elements.length;
-	var i = 0;
-
-	while (i < l) {
-		element = elements[i];
-		d = data[i];
-		if (element && d) {
-			rect = element.getBoundingClientRect();
-			d.top = viewportOffset + rect.top - d.threshold;
-			d.bottom = viewportOffset + rect.bottom + d.threshold;
-		}
-		i++;
-	}
-}
-
-// Runs through array of controlled elements
-// to check whether they are visible in viewport.
-function check() {
-	var l = elements.length;
-	var i = 0;
-
-	// No more elements - shut postpwn down.
-	if (!l) {
-		stop();
-	}
-	// Find visible elements.
-	else {
-		var visible = [];
-		var top = viewportOffset;
-		var bottom = viewportOffset + viewportHeight;
-		var d, element, elementTop, elementBottom;
-
-		while (i < l) {
-			element = elements[i];
-			if (element) {
-				d = data[i];
-				if (d) {
-					elementTop = d.top;
-					elementBottom = d.bottom;
-					if ((elementTop < top && elementBottom > bottom) || (elementTop >= top && elementTop <= bottom) || (elementBottom >= top && elementBottom <= bottom)) {
-						visible.push(element);
-					}
-				}
-			}
-			i++;
-		}
-
-		// Loop in reverse to keep indexes intact.
-		l = visible.length;
-		while (l--) {
-			init(visible[l]);
-		}
-	}
-}
-
-// Once a controlled element becomes visible in the viewport
-// `init` runs it through the plugin's `init` function
-// and removes it from `elements`.
-function init(element) {
-	var index = elements.indexOf(element);
-	if (index > -1) {
-		plugins[data[index].id].config.init(element);
-		removeElement(element);
-	}
-}
 
 // Adds supplied `elements` to be controlled by plugin `id`
 // - or find them via plugin `selector`.
 function add (id, elements) {
-	var l = elements.length;
-	var i = 0;
-	while (i < l) {
-		addElement(id, elements[i++]);
+	var length = elements.length;
+	var index = 0;
+	while (index < length) {
+		addElement(id, elements[index++]);
 	}
 	start();
 }
@@ -195,8 +189,13 @@ function addElement (id, element) {
 	// Only add unhandled elements.
 	if (index < 0) {
 		index = elements.length;
-		data[index] = {
+		elementData[index] = {
 			id: id,
+			visible: null,
+			initiated: false,
+			onInit: plugin.config.onInit || null,
+			onVisible: plugin.config.onVisible || null,
+			onHidden: plugin.config.onHidden || null,
 			threshold: plugin.config.threshold
 		};
 		elements.push(element);
@@ -206,18 +205,21 @@ function addElement (id, element) {
 
 // Remove elements from the controlled elements.
 function remove (elements) {
-	var i = elements.length;
-	while (i--) {
-		removeElement(elements[i]);
+	var index = elements.length;
+	while (index--) {
+		removeElement(elements[index]);
+	}
+	if (!elements.length) {
+		stop();
 	}
 }
 
-// Remove single element from controlled eleemnts.
+// Remove single element from controlled elements.
 function removeElement (element) {
 	index = elements.indexOf(element);
 	if (index > -1) {
 		elements.splice(index, 1);
-		data.splice(index, 1);
+		elementData.splice(index, 1);
 	}
 	return index;
 }
