@@ -25,8 +25,9 @@ var postpwn = require("postpwn");
 var myPlugin = postpwn({
 	selector: ".my-div",
 	threshold: 800,
-	init: function (element) {
+	onInit: function (element) {
 		element.className += " in-view";
+		myPlugin.remove(element);
 	}
 });
 
@@ -34,11 +35,6 @@ var myPlugin = postpwn({
 
 var anotherDiv = document.querySelector(".anotherDiv");
 myPlugin.add(anotherDiv);
-
-// Manually remove elements.
-
-myPlugin.remove(anotherDiv);
-anotherDiv.parentNode.removeChild(anotherDiv);
 ```
 
 ## API
@@ -49,11 +45,15 @@ Create a plugin to handle elements that enter the viewport.
 ##### Arguments
 
 * `config`
-   * `selector` (string) - Optional. A selector that matches elements that should be controlled by the plugin. If supplied 
+   * `selector` (string) - Optional. A selector that matches elements that should be controlled by the plugin. If supplied elements matching it will automatically be added to the pool of controlled elements at plugin creation.
    * `threshold` (number) - Optional. Trigger the init function this number of pixels before becoming visible in the viewport. Default is `0`.  
-   * `init` (function) - The init function that handles elements when they become visible in the viewport.
-      The `init` function is passed a single argument:
+   * `onInit` (function) - Optional. The init function that handles uninitiated elements when they become visible in the viewport.
+      The `onInit` function is passed the following arguments:
       * `element` (Element) - The element that has come into view.
+      * `data` (object) - Properties related to the element.
+         * `visible` (boolean) - Exposes whether the element is visible.
+   * `onVisible` (function) - Optional. This function will be called every time the element comes into view with the same arguments as `onInit`.
+   * `onHidden` (function) - Optional. This function will be called every time the element comes out of view with the same arguments as `onInit`.
 
 ##### Returns
 A postpwn plugin.
@@ -88,6 +88,8 @@ Remove elements that are being controlled by a plugin when removed from the DOM.
 Changes
 
 * Drop `name` argument from plugin creation.
+* `init` is renamed `onInit` and also receives a second argument `data`. Initiated elements are not automatically removed from the pool of controlled elements.
+* Added `onVisible` and `onHidden` config options.
 
 ### 2.0.0
 
