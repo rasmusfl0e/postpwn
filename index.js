@@ -20,7 +20,17 @@ function start () {
 
 		// For clients that do not support scrollevents
 		if (win.operamini) {
-			elements.forEach(replace);
+			var element, data;
+			var length = elements.length;
+			var index = 0;
+			while (index < length) {
+				element = elements[index];
+				data = elementData[index];
+				if (data.onInit) {
+					data.onInit(element, data);
+				}
+				index++;
+			}
 		}
 		else {
 
