@@ -204,7 +204,7 @@ Plugin.prototype.isVisible = function (element) {
 	// Get visibility by data index.
 	if (index > -1) {
 		return elementData[index].visible;
-	};
+	}
 	// No data available for element - return default value.
 	return true;
 };
