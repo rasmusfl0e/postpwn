@@ -20,17 +20,7 @@ function start () {
 
 		// For clients that do not support scrollevents
 		if (win.operamini) {
-			var element, data;
-			var length = elements.length;
-			var index = 0;
-			while (index < length) {
-				element = elements[index];
-				data = elementData[index];
-				if (data.onInit) {
-					data.onInit(element, data);
-				}
-				index++;
-			}
+			noscroll();
 		}
 		else {
 
@@ -48,6 +38,20 @@ function start () {
 			}, 0);
 
 		}
+	}
+}
+
+function noscroll () {
+	var element, data;
+	var length = elements.length;
+	var index = 0;
+	while (index < length) {
+		element = elements[index];
+		data = elementData[index];
+		if (data.onInit) {
+			data.onInit(element);
+		}
+		index++;
 	}
 }
 
@@ -138,18 +142,18 @@ function changeState (element, data) {
 	if (data.visible) {
 		// Element should trigger onInit if available
 		if (!data.initiated && data.onInit) {
-			data.onInit(element, data);
+			data.onInit(element);
 			data.initiated = true;
 		}
 		// Element should trigger onVisible if available
 		else if (data.onVisible) {
-			data.onVisible(element, data);
+			data.onVisible(element);
 		}
 	}
 	else {
 		// Element should trigger onHidden if available
 		if (data.onHidden) {
-			data.onHidden(element, data);
+			data.onHidden(element);
 		}
 	}
 }
@@ -195,6 +199,16 @@ Plugin.prototype.remove = function (/*elements*/) {
 	return this;
 };
 
+Plugin.prototype.isVisible = function (element) {
+	var index = elements.indexOf(element);
+	// Get visibility by data index.
+	if (index > -1) {
+		return elementData[index].visible;
+	};
+	// No data available for element - return default value.
+	return true;
+};
+
 // Adds supplied `elements` to be controlled by plugin `id`
 // - or find them via plugin `selector`.
 function add (id, elements) {
@@ -208,6 +222,10 @@ function add (id, elements) {
 
 // Add a single element to be controlled by a given plugin `id`.
 function addElement (id, element) {
+	// Return fast if element is already controlled
+	if ("_postpwned" in element) {
+		return;
+	}
 	var plugin = plugins[id];
 	var index = elements.indexOf(element);
 	// Only add unhandled elements.
@@ -222,9 +240,10 @@ function addElement (id, element) {
 			onHidden: plugin.config.onHidden || null,
 			threshold: plugin.config.threshold
 		};
+		// Add property to mark element as being controlled
+		element._postpwned = true;
 		elements.push(element);
 	}
-	return index;
 }
 
 // Remove elements from the controlled elements.
@@ -245,7 +264,6 @@ function removeElement (element) {
 		elements.splice(index, 1);
 		elementData.splice(index, 1);
 	}
-	return index;
 }
 
 module.exports = factory;

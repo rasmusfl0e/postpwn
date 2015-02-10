@@ -26,8 +26,20 @@ var myPlugin = postpwn({
 	selector: ".my-div",
 	threshold: 800,
 	onInit: function (element) {
-		element.className += " in-view";
-		myPlugin.remove(element);
+		var image = new Image();
+		image.onload = function () {
+			image.style.opacity = 0;
+			element.appendChild(image);
+			// Query visibility at the time image has loaded.
+			if (myPlugin.isVisible(element)) {
+				// Fade in image.
+			}
+			else {
+				// Just display it.
+			}
+			myPlugin.remove(element);
+		};
+		image.src = "//mysite.com/path/to/image.jpg";
 	}
 });
 
@@ -48,12 +60,10 @@ Create a plugin to handle elements that enter the viewport.
    * `selector` (string) - Optional. A selector that matches elements that should be controlled by the plugin. If supplied elements matching it will automatically be added to the pool of controlled elements at plugin creation.
    * `threshold` (number) - Optional. Trigger the init function this number of pixels before becoming visible in the viewport. Default is `0`.  
    * `onInit` (function) - Optional. The init function that handles uninitiated elements when they become visible in the viewport.
-      The `onInit` function is passed the following arguments:
+      The function is passed a single argument:
       * `element` (Element) - The element that has come into view.
-      * `data` (object) - Properties related to the element.
-         * `visible` (boolean) - Exposes whether the element is visible.
-   * `onVisible` (function) - Optional. This function will be called every time the element comes into view with the same arguments as `onInit`.
-   * `onHidden` (function) - Optional. This function will be called every time the element comes out of view with the same arguments as `onInit`.
+   * `onVisible` (function) - Optional. This function will be called every time the element comes into view with the same argument as `onInit`.
+   * `onHidden` (function) - Optional. This function will be called every time the element comes out of view with the same argument as `onInit`.
 
 ##### Returns
 A postpwn plugin.
@@ -79,6 +89,18 @@ Remove elements that are being controlled by a plugin when removed from the DOM.
 ##### Arguments
 
 * `elements` (Element or array-like object with elements) - The elements to be removed.
+
+
+#### [plugin].isVisible
+Tell if an controlled element is visible or not.
+Elements that are not controlled (either never added or removed from control) will result in `true`.
+
+##### Arguments
+
+* `element` (Element) - The element to qery visibility for.
+
+##### Returns
+A boolean.
 
 
 ## Changelog
