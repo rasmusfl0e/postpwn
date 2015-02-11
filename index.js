@@ -120,13 +120,16 @@ function check() {
 			element = elements[index];
 			data = elementData[index];
 			if (element && data) {
+				// Check initiation threshold.
 				if (data.onInit && !data.initiated) {
 					isVisible = isWithin(viewTop, viewBottom, data.top - data.threshold, data.bottom + data.threshold);
+					// Element is within initiation threshold.
 					if (data.soonVisible !== isVisible) {
 						data.soonVisible = isVisible;
 						changed.push([element, data]);
 					}
 				}
+				// Check general visibility changes.
 				else {
 					isVisible = isWithin(viewTop, viewBottom, data.top, data.bottom);
 					// Element visibility changed
