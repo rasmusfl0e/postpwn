@@ -1,0 +1,19 @@
+{
+	"env": {
+		"browser": true
+	},
+	"rules": {
+		"eqeqeq": true,
+		"guard-for-in": true,
+		"no-caller": true,
+		"no-empty": true,
+		"no-undef": true,
+		"curly": true,
+		"strict": [2, "never"],
+		"no-mixed-spaces-and-tabs": true,
+		"no-underscore-dangle": false,
+		"no-shadow": false,
+		"no-fallthrough": false,
+		"no-use-before-define": false
+	}
+}

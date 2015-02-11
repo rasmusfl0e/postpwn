@@ -5,8 +5,8 @@ postpwn
 
 ## Features
 
-* Create plugins to handle elements coming into view.
-* Configurable `threshold` for visibility.
+* Create plugins to handle elements coming into and out of view.
+* Configurable `threshold` for visibility on plugins - or on elements via `data-threshold` attributes.
 * Automatically find elements via `selector` optionally.
 * Uses dynamic throttling when checking visibility to avoid choking.
 * Caches positions of elements to avoid DOM access.
@@ -97,7 +97,7 @@ Elements that are not controlled (either never added or removed from control) wi
 
 ##### Arguments
 
-* `element` (Element) - The element to qery visibility for.
+* `element` (Element) - The element to query visibility for.
 
 ##### Returns
 A boolean.
@@ -110,8 +110,13 @@ A boolean.
 Changes
 
 * Drop `name` argument from plugin creation.
-* `init` is renamed `onInit` and also receives a second argument `data`. Initiated elements are not automatically removed from the pool of controlled elements.
-* Added `onVisible` and `onHidden` config options.
+* `init` renamed to `onInit`. Initiated elements are not automatically removed from the pool of controlled elements.
+* Controlled elements are marked with a `_postpwned` property. 
+
+Features
+
+* Added support for individually set `threshold` on elements via `data-threshold` attributes.
+* Added `onVisible` and `onHidden` callbacks to plugin config.
 
 ### 2.0.0
 

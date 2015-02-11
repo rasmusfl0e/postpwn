@@ -13,6 +13,7 @@ var plugins = {}; // Plugin data.
 var elements = []; // Controlled elements.
 var elementData = []; // Data relating to controlled elements.
 var checkThrottled = throttle(check); // Dynamically throttled check function.
+var getPositionsThrottled = throttle(getPositions); // Dynamically throttled getPositions function.
 
 // Initiate postpwn.
 function start () {
@@ -33,25 +34,11 @@ function start () {
 			setTimeout(function () {
 				viewportOffset = viewport.offset();
 				viewportHeight = viewport.height();
-				update();
+				getPositions();
 				check();
 			}, 0);
 
 		}
-	}
-}
-
-function noscroll () {
-	var element, data;
-	var length = elements.length;
-	var index = 0;
-	while (index < length) {
-		element = elements[index];
-		data = elementData[index];
-		if (data.onInit) {
-			data.onInit(element);
-		}
-		index++;
 	}
 }
 
@@ -67,8 +54,7 @@ function stop() {
 // On resize layout needs to be recalculated and rechecked.
 function resize () {
 	viewportHeight = viewport.height();
-	update();
-	checkThrottled();
+	refresh();
 }
 
 // On scroll only offset needs to be updated - and check run.
@@ -77,8 +63,14 @@ function scroll () {
 	checkThrottled();
 }
 
-// Update position data when layout has changed on resize.
-function update() {
+// Refresh positions and check for visibility changes.
+function refresh () {
+	getPositionsThrottled();
+	checkThrottled();
+}
+
+// Get current positions of controlled elements.
+function getPositions() {
 	var element, rect, data;
 	var length = elements.length;
 	var index = 0;
@@ -88,8 +80,24 @@ function update() {
 		data = elementData[index];
 		if (element && data) {
 			rect = element.getBoundingClientRect();
-			data.top = viewportOffset + rect.top - data.threshold;
-			data.bottom = viewportOffset + rect.bottom + data.threshold;
+			data.top = viewportOffset + rect.top;
+			data.bottom = viewportOffset + rect.bottom;
+		}
+		index++;
+	}
+}
+
+// Fallback function for initiating elements
+// on known clients with no scroll event support.
+function noscroll () {
+	var element, data;
+	var length = elements.length;
+	var index = 0;
+	while (index < length) {
+		element = elements[index];
+		data = elementData[index];
+		if (data.onInit) {
+			data.onInit(element);
 		}
 		index++;
 	}
@@ -103,7 +111,7 @@ function check() {
 
 	// Find visible elements.
 	if (length) {
-		var element, data, top, bottom, isVisible;
+		var element, data, isVisible;
 		var viewTop = viewportOffset;
 		var viewBottom = viewportOffset + viewportHeight;
 		var changed = [];
@@ -112,13 +120,20 @@ function check() {
 			element = elements[index];
 			data = elementData[index];
 			if (element && data) {
-				top = data.top;
-				bottom = data.bottom;
-				isVisible = (top < viewTop && bottom > viewBottom) || (top >= viewTop && top <= viewBottom) || (bottom >= viewTop && bottom <= viewBottom);
-				// Element visibility changed
-				if (data.visible !== isVisible) {
-					data.visible = isVisible;
-					changed.push([element, data]);
+				if (data.onInit && !data.initiated) {
+					isVisible = isWithin(viewTop, viewBottom, data.top - data.threshold, data.bottom + data.threshold);
+					if (data.soonVisible !== isVisible) {
+						data.soonVisible = isVisible;
+						changed.push([element, data]);
+					}
+				}
+				else {
+					isVisible = isWithin(viewTop, viewBottom, data.top, data.bottom);
+					// Element visibility changed
+					if (data.visible !== isVisible) {
+						data.visible = isVisible;
+						changed.push([element, data]);
+					}
 				}
 			}
 			index++;
@@ -137,16 +152,21 @@ function check() {
 	}
 }
 
+function isWithin (viewTop, viewBottom, top, bottom) {
+	return !(bottom < viewTop || top > viewBottom);
+}
+
 function changeState (element, data) {
+	// Element should trigger onInit if available
+	if (data.onInit && !data.initiated && data.soonVisible) {
+		data.onInit(element);
+		data.initiated = true;
+		return;
+	}
 	// Element has come into view
 	if (data.visible) {
-		// Element should trigger onInit if available
-		if (!data.initiated && data.onInit) {
-			data.onInit(element);
-			data.initiated = true;
-		}
 		// Element should trigger onVisible if available
-		else if (data.onVisible) {
+		if (data.onVisible) {
 			data.onVisible(element);
 		}
 	}
@@ -168,7 +188,7 @@ function factory (config) {
 	if (plugin.config.selector) {
 		add(plugin.id, doc.querySelectorAll(plugin.config.selector));
 	}
-	
+
 	start();
 
 	return plugin;
@@ -201,13 +221,16 @@ Plugin.prototype.remove = function (/*elements*/) {
 
 Plugin.prototype.isVisible = function (element) {
 	var index = elements.indexOf(element);
-	// Get visibility by data index.
-	if (index > -1) {
-		return elementData[index].visible;
+	var data = (index > -1) ? elementData[index] : null;
+	// Get visibility.
+	if (data) {
+		return isWithin(viewportOffset, viewportOffset + viewportHeight, data.top, data.bottom);
 	}
 	// No data available for element - return default value.
 	return true;
 };
+
+Plugin.prototype.refresh = refresh;
 
 // Adds supplied `elements` to be controlled by plugin `id`
 // - or find them via plugin `selector`.
@@ -226,19 +249,24 @@ function addElement (id, element) {
 	if ("_postpwned" in element) {
 		return;
 	}
+	var threshold;
 	var plugin = plugins[id];
 	var index = elements.indexOf(element);
 	// Only add unhandled elements.
 	if (index < 0) {
 		index = elements.length;
+		threshold = element.hasAttribute("data-threshold") ?
+			parseInt(element.getAttribute("data-threshold"), 10) :
+			plugin.config.threshold;
 		elementData[index] = {
 			id: id,
 			visible: false,
 			initiated: false,
+			soonVisible: false,
 			onInit: plugin.config.onInit || null,
 			onVisible: plugin.config.onVisible || null,
 			onHidden: plugin.config.onHidden || null,
-			threshold: plugin.config.threshold
+			threshold: threshold
 		};
 		// Add property to mark element as being controlled
 		element._postpwned = true;
@@ -267,4 +295,4 @@ function removeElement (element) {
 }
 
 module.exports = factory;
-module.exports.update = onresize;
+module.exports.refresh = refresh;

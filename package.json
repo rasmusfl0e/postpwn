@@ -15,5 +15,11 @@
   "bugs": {
     "url": "https://github.com/rasmusfl0e/postpwn/issues"
   },
-  "homepage": "https://github.com/rasmusfl0e/postpwn"
+  "homepage": "https://github.com/rasmusfl0e/postpwn",
+  "devDependencies": {
+    "eslint": "^0.14.1"
+  },
+  "scripts": {
+    "lint": "eslint -c ./eslint.config.json ./index.js"
+  }
 }
