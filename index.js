@@ -6,32 +6,29 @@ var throttle = require("./throttle");
 var win = window;
 var doc = document;
 
-var viewportOffset = 0; // Cached scroll offset.
-var viewportHeight = 0; // Cached viewport height.
 var active = false; // Is postpwn active.
-var plugins = {}; // Plugin instances.
 var elements = []; // Controlled elements.
+var plugins = {}; // Plugin instances.
+var viewportHeight = 0; // Cached viewport height.
+var viewportOffset = 0; // Cached scroll offset.
+
 var resizeThrottled = throttle(resize, refresh); // Dynamically throttled check function.
 var scrollThrottled = throttle(scroll, check); // Dynamically throttled refresh function.
 
 // Initiate postpwn.
 function start () {
 	if (elements.length) {
-
 		// For clients that do not support scrollevents
 		if (win.operamini) {
 			noscroll();
 		}
 		else {
-
 			if (!active) {
 				events.add(win, "scroll", scrollThrottled);
 				events.add(win, "resize", resizeThrottled);
 				active = true;
 			}
-
 			setTimeout(init, 0);
-
 		}
 	}
 }
@@ -59,8 +56,8 @@ function scroll () {
 
 // Get initial positions
 function init () {
-	viewportOffset = viewport.offset();
 	viewportHeight = viewport.height();
+	viewportOffset = viewport.offset();
 	refresh();
 }
 
@@ -68,6 +65,24 @@ function init () {
 function refresh () {
 	getPositions();
 	check();
+}
+
+// Fallback function for initiating elements
+// on known clients with no scroll event support.
+function noscroll () {
+	var plugin, element, data;
+	var length = elements.length;
+	var index = 0;
+
+	while (index < length) {
+		element = elements[index];
+		data = element._postpwn;
+		plugin = data && plugins[data.id];
+		if (plugin && plugin.onInit) {
+			plugin.onInit(element);
+		}
+		index++;
+	}
 }
 
 // Get current positions of controlled elements.
@@ -88,23 +103,6 @@ function getPositions() {
 	}
 }
 
-// Fallback function for initiating elements
-// on known clients with no scroll event support.
-function noscroll () {
-	var element, data;
-	var length = elements.length;
-	var index = 0;
-
-	while (index < length) {
-		element = elements[index];
-		data = element_postpwn;
-		if (data && data.onInit) {
-			data.onInit(element);
-		}
-		index++;
-	}
-}
-
 // Runs through array of controlled elements
 // to check whether they are visible in viewport.
 function check() {
@@ -113,7 +111,7 @@ function check() {
 
 	// Find visible elements.
 	if (length) {
-		var element, data, isVisible;
+		var element, data, isVisible, threshold;
 		var viewTop = viewportOffset;
 		var viewBottom = viewportOffset + viewportHeight;
 		var changed = [];
@@ -123,8 +121,9 @@ function check() {
 			data = element._postpwn;
 			if (element && data) {
 				// Check initiation threshold.
-				if (data.onInit && !data.initiated) {
-					isVisible = isWithin(viewTop, viewBottom, data.top - data.threshold, data.bottom + data.threshold);
+				if (!data.initiated && plugins[data.id].onInit) {
+					threshold = "threshold" in data ? data.threshold : viewportHeight;
+					isVisible = isWithin(viewTop, viewBottom, data.top - threshold, data.bottom + threshold);
 					// Element is within initiation threshold.
 					if (data.soonVisible !== isVisible) {
 						data.soonVisible = isVisible;
@@ -166,48 +165,37 @@ function changeState (element, data) {
 	if (!data) {
 		return;
 	}
+	var plugin = plugins[data.id];
 	// Element should trigger onInit if available
-	if (data.onInit && !data.initiated && data.soonVisible) {
-		data.onInit(element);
+	if (plugin.onInit && !data.initiated && data.soonVisible) {
+		plugin.onInit(element);
 		data.initiated = true;
 		return;
 	}
 	// Element has come into view
 	if (data.visible) {
 		// Element should trigger onVisible if available
-		if (data.onVisible) {
-			data.onVisible(element);
+		if (plugin.onVisible) {
+			plugin.onVisible(element);
 		}
 	}
 	else {
 		// Element should trigger onHidden if available
-		if (data.onHidden) {
-			data.onHidden(element);
+		if (plugin.onHidden) {
+			plugin.onHidden(element);
 		}
 	}
 }
 
-// Create plugin and start postpwn.
-function factory (config) {
-	var plugin = new Plugin(config);
 
-	start();
-
-	return plugin;
-}
 
 function Plugin (config) {
 	this.id = uniqueId();
 	this.config = config;
-	if (!("threshold" in this.config)) {
-		this.config.threshold = 0;
-	}
 	if (this.config.selector) {
 		add(this.id, doc.querySelectorAll(this.config.selector));
 	}
-
 	plugins[id] = plugin;
-
 }
 
 Plugin.prototype.add = function (/*elements*/) {
@@ -255,24 +243,26 @@ function addElement (id, element) {
 	// Return fast if element is already controlled
 	var data = element._postpwn;
 	if (!data) {
-		var threshold;
-		var plugin = plugins[id];
+		var config = plugins[id].config;
 		var index = elements.indexOf(element);
 		// Only add unhandled elements.
 		if (index < 0) {
-			threshold = element.hasAttribute("data-threshold") ?
-				parseInt(element.getAttribute("data-threshold"), 10) :
-				plugin.config.threshold;
-			element._postpwn = {
+			data = {
 				id: id,
 				initiated: false,
 				soonVisible: false,
 				visible: false,
-				onInit: plugin.config.onInit || null,
-				onHidden: plugin.config.onHidden || null,
-				onVisible: plugin.config.onVisible || null,
-				threshold: threshold
+				onInit: config.onInit || null,
+				onHidden: config.onHidden || null,
+				onVisible: config.onVisible || null
 			};
+			if (element.hasAttribute("data-threshold")) {
+				data.threshold = parseInt(element.getAttribute("data-threshold"), 10);
+			}
+			else if ("threshold" in config) {
+				data.threshold = config.threshold;
+			}
+			element._postpwn = data;
 			// Add property to mark element as being controlled
 			elements.push(element);
 		}
@@ -298,5 +288,9 @@ function removeElement (element) {
 	}
 }
 
-module.exports = factory;
+module.exports = function factory (config) {
+	var plugin = new Plugin(config);
+	start();
+	return plugin;
+};
 module.exports.refresh = refresh;

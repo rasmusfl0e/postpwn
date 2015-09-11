@@ -58,7 +58,7 @@ Create a plugin to handle elements that enter the viewport.
 
 * `config`
    * `selector` (string) - Optional. A selector that matches elements that should be controlled by the plugin. If supplied elements matching it will automatically be added to the pool of controlled elements at plugin creation.
-   * `threshold` (number) - Optional. Trigger the init function this number of pixels before becoming visible in the viewport. Default is `0`.  
+   * `threshold` (number) - Optional. Trigger the init function this number of pixels before becoming visible in the viewport. Default is the dynamic height of the window.
    * `onInit` (function) - Optional. The init function that handles uninitiated elements when they become visible in the viewport.
       The function is passed a single argument:
       * `element` (Element) - The element that has come into view.
@@ -105,13 +105,20 @@ A boolean.
 
 ## Changelog
 
+### 4.0.0
+
+Changes
+
+* Default value of `threshold` is now the dynamice window height instead of `0`.
+* Data is now set through the `_postpwn` property elements.
+
 ### 3.0.0
 
 Changes
 
 * Drop `name` argument from plugin creation.
 * `init` renamed to `onInit`. Initiated elements are not automatically removed from the pool of controlled elements.
-* Controlled elements are marked with a `_postpwned` property. 
+* Controlled elements are marked with a `_postpwned` property.
 
 Features
 

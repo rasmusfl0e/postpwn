@@ -1,6 +1,6 @@
 {
   "name": "postpwn",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Postpone initialization of components until they are in the viewport.",
   "main": "index.js",
   "repository": {
