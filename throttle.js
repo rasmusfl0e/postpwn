@@ -1,7 +1,9 @@
-// A function that adds that wraps `func` and adds dynamic throttling.
-// Useful for events that fire rapidly like onscroll and onresize. 
+// A function that wraps `firstCall` (and optionally `nextCall`) and adds dynamic throttling.
+// Useful for events that fire rapidly like onscroll and onresize.
 
-module.exports = function (func) {
+module.exports = function (firstCall, nextCall) {
+
+	nextCall = nextCall || firstCall;
 
 	var timer, last, fire;
 	var base = 16;
@@ -13,7 +15,7 @@ module.exports = function (func) {
 
 		if (fire) {
 			fire = false;
-			func();
+			nextCall();
 		}
 	}
 
@@ -25,7 +27,7 @@ module.exports = function (func) {
 			}
 			last = now;
 			timer = setTimeout(timeout, interval);
-			func();
+			firstCall();
 		}
 		else if (!fire) {
 			fire = true;

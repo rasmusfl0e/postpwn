@@ -9,11 +9,10 @@ var doc = document;
 var viewportOffset = 0; // Cached scroll offset.
 var viewportHeight = 0; // Cached viewport height.
 var active = false; // Is postpwn active.
-var plugins = {}; // Plugin data.
+var plugins = {}; // Plugin instances.
 var elements = []; // Controlled elements.
-var elementData = []; // Data relating to controlled elements.
-var checkThrottled = throttle(check); // Dynamically throttled check function.
-var getPositionsThrottled = throttle(getPositions); // Dynamically throttled getPositions function.
+var resizeThrottled = throttle(resize, refresh); // Dynamically throttled check function.
+var scrollThrottled = throttle(scroll, check); // Dynamically throttled refresh function.
 
 // Initiate postpwn.
 function start () {
@@ -26,17 +25,12 @@ function start () {
 		else {
 
 			if (!active) {
+				events.add(win, "scroll", scrollThrottled);
+				events.add(win, "resize", resizeThrottled);
 				active = true;
-				events.add(win, "scroll", scroll);
-				events.add(win, "resize", resize);
 			}
 
-			setTimeout(function () {
-				viewportOffset = viewport.offset();
-				viewportHeight = viewport.height();
-				getPositions();
-				check();
-			}, 0);
+			setTimeout(init, 0);
 
 		}
 	}
@@ -45,8 +39,8 @@ function start () {
 // When no more elements are being controlled - wind down postpwn.
 function stop() {
 	if (active) {
-		events.remove(win, "scroll", scroll);
-		events.remove(win, "resize", resize);
+		events.remove(win, "scroll", scrollThrottled);
+		events.remove(win, "resize", resizeThrottled);
 		active = false;
 	}
 }
@@ -60,13 +54,20 @@ function resize () {
 // On scroll only offset needs to be updated - and check run.
 function scroll () {
 	viewportOffset = viewport.offset();
-	checkThrottled();
+	check();
+}
+
+// Get initial positions
+function init () {
+	viewportOffset = viewport.offset();
+	viewportHeight = viewport.height();
+	refresh();
 }
 
 // Refresh positions and check for visibility changes.
 function refresh () {
-	getPositionsThrottled();
-	checkThrottled();
+	getPositions();
+	check();
 }
 
 // Get current positions of controlled elements.
@@ -77,7 +78,7 @@ function getPositions() {
 
 	while (index < length) {
 		element = elements[index];
-		data = elementData[index];
+		data = element_postpwn;
 		if (element && data) {
 			rect = element.getBoundingClientRect();
 			data.top = viewportOffset + rect.top;
@@ -93,10 +94,11 @@ function noscroll () {
 	var element, data;
 	var length = elements.length;
 	var index = 0;
+
 	while (index < length) {
 		element = elements[index];
-		data = elementData[index];
-		if (data.onInit) {
+		data = element_postpwn;
+		if (data && data.onInit) {
 			data.onInit(element);
 		}
 		index++;
@@ -118,7 +120,7 @@ function check() {
 
 		while (index < length) {
 			element = elements[index];
-			data = elementData[index];
+			data = element._postpwn;
 			if (element && data) {
 				// Check initiation threshold.
 				if (data.onInit && !data.initiated) {
@@ -126,7 +128,7 @@ function check() {
 					// Element is within initiation threshold.
 					if (data.soonVisible !== isVisible) {
 						data.soonVisible = isVisible;
-						changed.push([element, data]);
+						changed.push(element);
 					}
 				}
 				// Check general visibility changes.
@@ -135,7 +137,7 @@ function check() {
 					// Element visibility changed
 					if (data.visible !== isVisible) {
 						data.visible = isVisible;
-						changed.push([element, data]);
+						changed.push(element);
 					}
 				}
 			}
@@ -145,7 +147,7 @@ function check() {
 		length = changed.length;
 		index = 0;
 		while (index < length) {
-			changeState.apply(null, changed[index++]);
+			changeState(changed[index++]);
 		}
 
 	}
@@ -160,6 +162,10 @@ function isWithin (viewTop, viewBottom, top, bottom) {
 }
 
 function changeState (element, data) {
+	var data = element._postpwn;
+	if (!data) {
+		return;
+	}
 	// Element should trigger onInit if available
 	if (data.onInit && !data.initiated && data.soonVisible) {
 		data.onInit(element);
@@ -183,26 +189,25 @@ function changeState (element, data) {
 
 // Create plugin and start postpwn.
 function factory (config) {
-	var id = uniqueId();
-	var plugin = new Plugin(id, config);
-
-	plugins[id] = plugin;
-
-	if (plugin.config.selector) {
-		add(plugin.id, doc.querySelectorAll(plugin.config.selector));
-	}
+	var plugin = new Plugin(config);
 
 	start();
 
 	return plugin;
 }
 
-function Plugin (id, config) {
-	this.id = id;
+function Plugin (config) {
+	this.id = uniqueId();
 	this.config = config;
 	if (!("threshold" in this.config)) {
 		this.config.threshold = 0;
 	}
+	if (this.config.selector) {
+		add(this.id, doc.querySelectorAll(this.config.selector));
+	}
+
+	plugins[id] = plugin;
+
 }
 
 Plugin.prototype.add = function (/*elements*/) {
@@ -223,13 +228,12 @@ Plugin.prototype.remove = function (/*elements*/) {
 };
 
 Plugin.prototype.isVisible = function (element) {
-	var index = elements.indexOf(element);
-	var data = (index > -1) ? elementData[index] : null;
+	var data = element._postpwn;
 	// Get visibility.
 	if (data) {
 		return isWithin(viewportOffset, viewportOffset + viewportHeight, data.top, data.bottom);
 	}
-	// No data available for element - return default value.
+	// No data available on element - return default value.
 	return true;
 };
 
@@ -249,31 +253,29 @@ function add (id, elements) {
 // Add a single element to be controlled by a given plugin `id`.
 function addElement (id, element) {
 	// Return fast if element is already controlled
-	if ("_postpwned" in element) {
-		return;
-	}
-	var threshold;
-	var plugin = plugins[id];
-	var index = elements.indexOf(element);
-	// Only add unhandled elements.
-	if (index < 0) {
-		index = elements.length;
-		threshold = element.hasAttribute("data-threshold") ?
-			parseInt(element.getAttribute("data-threshold"), 10) :
-			plugin.config.threshold;
-		elementData[index] = {
-			id: id,
-			visible: false,
-			initiated: false,
-			soonVisible: false,
-			onInit: plugin.config.onInit || null,
-			onVisible: plugin.config.onVisible || null,
-			onHidden: plugin.config.onHidden || null,
-			threshold: threshold
-		};
-		// Add property to mark element as being controlled
-		element._postpwned = true;
-		elements.push(element);
+	var data = element._postpwn;
+	if (!data) {
+		var threshold;
+		var plugin = plugins[id];
+		var index = elements.indexOf(element);
+		// Only add unhandled elements.
+		if (index < 0) {
+			threshold = element.hasAttribute("data-threshold") ?
+				parseInt(element.getAttribute("data-threshold"), 10) :
+				plugin.config.threshold;
+			element._postpwn = {
+				id: id,
+				initiated: false,
+				soonVisible: false,
+				visible: false,
+				onInit: plugin.config.onInit || null,
+				onHidden: plugin.config.onHidden || null,
+				onVisible: plugin.config.onVisible || null,
+				threshold: threshold
+			};
+			// Add property to mark element as being controlled
+			elements.push(element);
+		}
 	}
 }
 
@@ -293,7 +295,6 @@ function removeElement (element) {
 	index = elements.indexOf(element);
 	if (index > -1) {
 		elements.splice(index, 1);
-		elementData.splice(index, 1);
 	}
 }
 
