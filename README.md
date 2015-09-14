@@ -1,21 +1,38 @@
 postpwn
 =======
 
-> Postpone initialization of components until they are in the viewport.
+> Postpone initialization of components until they are visible in the viewport.
 
 ## Features
 
 * Create plugins to handle elements coming into and out of view.
-* Configurable `threshold` for visibility on plugins - or on elements via `data-threshold` attributes.
+* Configurable `threshold` for visibility on plugins - or on elements via `data-*` attributes.
 * Automatically find elements via `selector` optionally.
 * Uses dynamic throttling when checking visibility to avoid choking.
-* Caches positions of elements to avoid DOM access.
+* Caches positions of elements to minimize layout thrashing.
 * Supports evergreen browsers and IE8 (provided you include [ES5-shim](https://github.com/es-shims/es5-shim/)).
 * No library dependencies.
 
 *NB*: Only handles vertical scrolling.
 
 ## Usage
+
+### Basic
+
+```js
+var postpwn = require("postpwn");
+
+// Create a usecase-specific plugin to handle certains elements.
+
+var myPlugin = postpwn({
+	selector: ".my-div",
+	onInit: function (element) {
+		element.className = element.className + " visible";
+		myPlugin.remove(element);
+	}
+});
+
+### Advanced
 
 ```js
 var postpwn = require("postpwn");
@@ -59,6 +76,7 @@ Create a plugin to handle elements that enter the viewport.
 * `config`
    * `selector` (string) - Optional. A selector that matches elements that should be controlled by the plugin. If supplied elements matching it will automatically be added to the pool of controlled elements at plugin creation.
    * `threshold` (number) - Optional. Trigger the init function this number of pixels before becoming visible in the viewport. Default is the dynamic height of the window.
+   * `thresholdAttribute` (string) - Optional. Name of the attribute to use to locally override `threshold` for an element. Default is `"data-threshold"`.
    * `onInit` (function) - Optional. The init function that handles uninitiated elements when they become visible in the viewport.
       The function is passed a single argument:
       * `element` (Element) - The element that has come into view.
@@ -69,7 +87,7 @@ Create a plugin to handle elements that enter the viewport.
 A postpwn plugin.
 
 
-### postpwn.update
+### postpwn.refresh
 Can be called to refresh the cached positions of controlled elements if your layout changes (onresize is handled automatically).
 
 
@@ -109,8 +127,12 @@ A boolean.
 
 Changes
 
-* Default value of `threshold` is now the dynamice window height instead of `0`.
-* Data is now set through the `_postpwn` property elements.
+* Default value of `threshold` is now the dynamic window height instead of `0`.
+* Data is now set through the `_postpwn` property on elements.
+
+Features
+
+* Added `thresholdAttribute`.
 
 ### 3.0.0
 

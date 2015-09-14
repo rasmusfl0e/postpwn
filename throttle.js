@@ -1,21 +1,22 @@
-// A function that wraps `firstCall` (and optionally `nextCall`) and adds dynamic throttling.
+// A function that wraps `callback` and adds dynamic throttling.
 // Useful for events that fire rapidly like onscroll and onresize.
 
-module.exports = function (firstCall, nextCall) {
+module.exports = function (callback, intervalBase) {
 
-	nextCall = nextCall || firstCall;
+	if (!intervalBase) {
+		intervalBase = 16;
+	}
 
 	var timer, last, fire;
-	var base = 16;
-	var interval = base;
+	var interval = intervalBase;
 
 	function timeout () {
 		timer = clearTimeout(timer);
-		interval = (base + (new Date()).valueOf() - last) / 2;
+		interval = (intervalBase + (new Date()).valueOf() - last) / 2;
 
 		if (fire) {
 			fire = false;
-			nextCall();
+			callback();
 		}
 	}
 
@@ -23,11 +24,11 @@ module.exports = function (firstCall, nextCall) {
 		if (!timer) {
 			var now = (new Date()).valueOf();
 			if (last && last + interval < now) {
-				interval = base;
+				interval = intervalBase;
 			}
 			last = now;
 			timer = setTimeout(timeout, interval);
-			firstCall();
+			callback();
 		}
 		else if (!fire) {
 			fire = true;
