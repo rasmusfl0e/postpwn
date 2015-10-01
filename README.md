@@ -31,6 +31,7 @@ var myPlugin = postpwn({
 		myPlugin.remove(element);
 	}
 });
+```
 
 ### Advanced
 
