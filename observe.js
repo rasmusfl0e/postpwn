@@ -11,13 +11,13 @@ var active;
 var height = viewport.height();
 var offset = viewport.offset();
 
-var callbacks = {
-	check: [],
-	refresh: []
-};
+var check = noop;
+var refresh = noop;
 
 var resize = throttle(updateHeight);
 var scroll = initial(throttle(updateOffset), refresh);
+
+function noop () {}
 
 // Initiate postpwn.
 function start () {
@@ -48,19 +48,6 @@ function updateOffset () {
 	check();
 }
 
-function check () {
-	callbacks.check.forEach(function (callback) {
-		callback();
-	});
-}
-
-// Refresh positions.
-function refresh () {
-	callbacks.refresh.forEach(function (callback) {
-		callback();
-	});
-}
-
 function getHeight () {
 	return height;
 }
@@ -70,13 +57,12 @@ function getPosition (element) {
 	return {
 		top: offset + rect.top,
 		bottom: offset + rect.bottom
-	}
+	};
 }
 
 function isVisible (top, bottom) {
 	return !(bottom < offset || top > offset + height);
 }
-
 
 function stop() {
 	if (active) {
@@ -86,30 +72,15 @@ function stop() {
 	}
 }
 
-module.exports = function (options) {
+module.exports = function (_refresh, _check) {
 
-	var keys = Object.keys(callbacks);
-
-	keys.forEach(function (key) {
-		if (typeof options[key] === "function" && callbacks[key].indexOf(options[key]) < 0) {
-			callbacks[key].push(options[key]);
-		}
-	});
-
-	function remove () {
-		keys.forEach(function (key) {
-			var index = callbacks[key].indexOf(options[key]);
-			if (index  > -1) {
-				callbacks[key].splice(index, 1);
-			}
-		});
-	}
+	refresh = _refresh;
+	check = _check;
 
 	return {
 		start: start,
 		stop: stop,
 		refresh: refresh,
-		remove: remove,
 		isVisible: isVisible,
 		getHeight: getHeight,
 		getPosition: getPosition

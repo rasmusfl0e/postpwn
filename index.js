@@ -8,17 +8,19 @@ var active = false; // Is postpwn active.
 var plugins = {}; // Plugin instances.
 var elements = [];
 
-var observer = observe({
-	refresh: refresh,
-	check: check
-});
+var observer = observe(refresh, check);
 
 function add (config, els) {
-	if (!els || !els.length && config.selector) {
-		els = doc.querySelectorAll(config.selector);
+	if (!els) {
+		if (config.selector) {
+			els = doc.querySelectorAll(config.selector);
+		}
+	}
+	else if (els.length === 1 && !els[0]) {
+		return;
 	}
 	else {
-		els = (els.length === 1 && els[0].length) ? els[0] : els;
+		els = (els.length === 1 && els[0] && els[0].length) ? els[0] : els;
 	}
 
 	var length = els.length;
@@ -60,7 +62,7 @@ function addElement (config, element) {
 
 function remove (/*elements*/) {
 	var args = arguments;
-	var els = (args.length === 1 && args[0].length) ? args[0] : args;
+	var els = (args.length === 1 && args[0] && args[0].length) ? args[0] : args;
 
 	var length = els.length;
 	var index = 0;
@@ -156,13 +158,13 @@ module.exports = function factory (config) {
 
 	plugins[config.id] = config;
 
-	add(config);
+	add(config, null);
 
 	observer.start();
 
 	return {
 		add: function () {
-			add(config, arguments);
+			add(config, arguments.length ? arguments : null);
 		},
 		remove: remove,
 		isVisible: function (element) {
