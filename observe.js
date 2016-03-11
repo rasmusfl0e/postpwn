@@ -1,4 +1,3 @@
-var events = require("./events");
 var viewport = require("./viewport");
 var initial = require("./initial");
 var throttle = require("./throttle");
@@ -21,8 +20,8 @@ function noop () {}
 // Initiate postpwn.
 function start () {
 	if (!active) {
-		events.add(win, "resize", resize);
-		events.add(win, "scroll", scroll);
+		win.addEventListener("resize", resize);
+		win.addEventListener("scroll", scroll);
 		active = true;
 		setTimeout(init, 0);
 	}
@@ -32,7 +31,6 @@ function start () {
 function init () {
 	updateHeight();
 	updateOffset();
-	refresh();
 }
 
 // On resize layout needs to be refreshed.
@@ -65,8 +63,8 @@ function isVisible (top, bottom) {
 
 function stop() {
 	if (active) {
-		events.remove(win, "resize", resize);
-		events.remove(win, "scroll", scroll);
+		win.removeEventListener("resize", resize);
+		win.removeEventListener("scroll", scroll);
 		active = false;
 	}
 }
