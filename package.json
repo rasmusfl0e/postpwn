@@ -20,6 +20,6 @@
     "eslint": "^2.3.0"
   },
   "scripts": {
-    "prepublish": "eslint -c ./eslint.config.json ./index.js"
+    "prepublish": "eslint ./index.js"
   }
 }
