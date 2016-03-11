@@ -4,7 +4,6 @@ var initial = require("./initial");
 var throttle = require("./throttle");
 
 var win = window;
-var doc = document;
 
 var active;
 

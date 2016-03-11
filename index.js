@@ -1,10 +1,6 @@
 var observe = require("./observe");
 var uniqueId = require("./uniqueId");
 
-var win = window;
-var doc = document;
-
-var active = false; // Is postpwn active.
 var plugins = {}; // Plugin instances.
 var elements = [];
 
@@ -13,7 +9,7 @@ var observer = observe(refresh, check);
 function add (config, els) {
 	if (!els) {
 		if (config.selector) {
-			els = doc.querySelectorAll(config.selector);
+			els = document.querySelectorAll(config.selector);
 		}
 	}
 	else if (els.length === 1 && !els[0]) {
@@ -138,6 +134,7 @@ function changeState (element) {
 				config.onVisible(element);
 			}
 		}
+		// Element exited the view
 		else {
 			// Element should trigger onHidden if available
 			if (config.onHidden) {
