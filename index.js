@@ -93,7 +93,7 @@ function refreshElement (element) {
 function check () {
 	elements.filter(checkElement).forEach(changeState);
 	if (!elements.length) {
-		vis.stop();
+		observer.stop();
 	}
 }
 
