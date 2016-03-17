@@ -1,15 +1,15 @@
-var observe = require("./observe");
-var uniqueId = require("./uniqueId");
-var add = require("./add");
-var remove = require("./remove");
+var observe = require("./lib/observe");
+var uniqueId = require("./lib/uniqueId");
+var add = require("./lib/add");
+var remove = require("./lib/remove");
 
 var plugins = {}; // Plugin instances.
 var elements = [];
-var observer = observe(refresh, check);
+var observer = observe(update, check);
 
-var changeState = require("./changeState").bind(null, plugins);
-var checkElement = require("./checkElement").bind(null, plugins, observer);
-var refreshElement = require("./refreshElement").bind(null, observer);
+var changeState = require("./lib/changeState").bind(null, plugins);
+var checkElement = require("./lib/checkElement").bind(null, plugins, observer);
+var updateElement = require("./lib/updateElement").bind(null, observer);
 
 
 function check () {
@@ -19,11 +19,8 @@ function check () {
 	}
 }
 
-// Refresh positions and check for visibility changes.
-
-function refresh () {
-	elements.forEach(refreshElement);
-	check();
+function update () {
+	elements.forEach(updateElement);
 }
 
 module.exports = function factory (config) {
@@ -31,6 +28,7 @@ module.exports = function factory (config) {
 	if (!config.thresholdAttribute) {
 		config.thresholdAttribute = "data-threshold";
 	}
+	
 	if (!config.id) {
 		config.id = uniqueId();
 	}
@@ -54,5 +52,3 @@ module.exports = function factory (config) {
 		}
 	};
 };
-
-module.exports.refresh = refresh;
