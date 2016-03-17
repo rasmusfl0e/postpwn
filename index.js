@@ -1,26 +1,28 @@
-var observe = require("./lib/observe");
-var uniqueId = require("./lib/uniqueId");
 var add = require("./lib/add");
 var remove = require("./lib/remove");
+var observe = require("./lib/observe");
+var uniqueId = require("./lib/uniqueId");
+var changeState = require("./lib/changeState");
+var checkElement = require("./lib/checkElement");
+var updateElement = require("./lib/updateElement");
 
 var plugins = {}; // Plugin instances.
 var elements = [];
 var observer = observe(update, check);
 
-var changeState = require("./lib/changeState").bind(null, plugins);
-var checkElement = require("./lib/checkElement").bind(null, plugins, observer);
-var updateElement = require("./lib/updateElement").bind(null, observer);
-
+var changeStateBound = changeState.bind(null, plugins);
+var checkElementBound = checkElement.bind(null, plugins, observer);
+var updateElementBound = updateElement.bind(null, observer);
 
 function check () {
-	elements.filter(checkElement).forEach(changeState);
+	elements.filter(checkElementBound).forEach(changeStateBound);
 	if (!elements.length) {
 		observer.stop();
 	}
 }
 
 function update () {
-	elements.forEach(updateElement);
+	elements.forEach(updateElementBound);
 }
 
 module.exports = function factory (config) {
