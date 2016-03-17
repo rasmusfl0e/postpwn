@@ -5,19 +5,19 @@ var doc = document;
 var html = doc.documentElement;
 var body = doc.body;
 
-var height = ("innerHeight" in win) ?
-	function () {
+var height = ("innerHeight" in win)
+	? function () {
 		return win.innerHeight;
-	} :
-	function () {
+	}
+	: function () {
 		return html.clientHeight;
 	};
 
-var offset = ("pageYOffset" in win) ?
-	function () {
+var offset = ("pageYOffset" in win)
+	? function () {
 		return win.pageYOffset;
-	} :
-	(function () {
+	}
+	: (function () {
 		var t = ("scrollTop" in html) ? html : body;
 		return function () {
 			return t.scrollTop;

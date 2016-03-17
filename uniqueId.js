@@ -2,7 +2,7 @@
 
 var pool = [];
 
-function generate (length) {
+module.exports = function generate (length) {
 	var id = "";
 	length = length || 10;
 
@@ -17,6 +17,4 @@ function generate (length) {
 	pool.push(id);
 
 	return id;
-}
-
-module.exports = generate;
+};
