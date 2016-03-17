@@ -1,4 +1,4 @@
-modulxe.exports = function (plugins, element) {
+module.exports = function (plugins, element) {
 	var data = element._postpwn;
 	var config = plugins[data.id];
 	if (data && config) {

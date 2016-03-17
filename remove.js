@@ -1,4 +1,4 @@
-module.exports = function (/*elements*/) {
+module.exports = function (elements /*, els*/) {
 	var args = arguments;
 	var els = (args.length === 1 && args[0] && args[0].length) ? args[0] : args;
 

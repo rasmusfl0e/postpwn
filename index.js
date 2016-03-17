@@ -11,18 +11,19 @@ var changeState = require("./changeState").bind(null, plugins);
 var checkElement = require("./checkElement").bind(null, plugins, observer);
 var refreshElement = require("./refreshElement").bind(null, observer);
 
-// Refresh positions and check for visibility changes.
-
-function refresh () {
-	elements.forEach(refreshElement);
-	check();
-}
 
 function check () {
 	elements.filter(checkElement).forEach(changeState);
 	if (!elements.length) {
 		observer.stop();
 	}
+}
+
+// Refresh positions and check for visibility changes.
+
+function refresh () {
+	elements.forEach(refreshElement);
+	check();
 }
 
 module.exports = function factory (config) {
@@ -36,17 +37,16 @@ module.exports = function factory (config) {
 
 	plugins[config.id] = config;
 
-	add(observer, elements, config, null);
+	var addBound = add.bind(null, observer, elements, config);
+	var removeBound = remove.bind(null, elements);
+
+	addBound();
 
 	observer.start();
 
 	return {
-		add: function () {
-			add(observer, elements, config, arguments.length ? arguments : null);
-		},
-		remove: function (arguments) {
-			remove(elements, arguments);
-		},
+		add: addBound,
+		remove: removeBound,
 		isVisible: function (element) {
 			var data = element._postpwn;
 			// Get visibility.
