@@ -8,7 +8,8 @@ var updateElement = require("./lib/updateElement");
 
 var plugins = {}; // Plugin instances.
 var elements = [];
-var observer = observe(update, check);
+var observer = observe(update, check, end);
+var endCallbacks = [];
 
 var changeStateBound = changeState.bind(null, plugins);
 var checkElementBound = checkElement.bind(null, plugins, observer);
@@ -23,6 +24,12 @@ function check () {
 
 function update () {
 	elements.forEach(updateElementBound);
+}
+
+function end () {
+	endCallbacks.forEach(function (callback) {
+		callback();
+	});
 }
 
 module.exports = function factory (config) {
