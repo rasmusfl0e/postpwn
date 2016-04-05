@@ -8,12 +8,20 @@ var updateElement = require("./lib/updateElement");
 
 var plugins = {}; // Plugin instances.
 var elements = [];
-var observer = observe(update, check, end);
-var endCallbacks = [];
+var observer = observe(start, update, check, end);
 
 var changeStateBound = changeState.bind(null, plugins);
 var checkElementBound = checkElement.bind(null, plugins, observer);
 var updateElementBound = updateElement.bind(null, observer);
+
+function start () {
+	elements.forEach(function (element) {
+		var data = element._postpwn;
+		if (data) {
+			data.previouslyVisible = data.visible;
+		}
+	});
+}
 
 function check () {
 	elements.filter(checkElementBound).forEach(changeStateBound);
@@ -27,8 +35,18 @@ function update () {
 }
 
 function end () {
-	endCallbacks.forEach(function (callback) {
-		callback();
+	elements.filter(function (element) {
+		var data = element._postpwn;
+		return data && data.visible && !data.previouslyVisible;
+	}).forEach(function (element) {
+		var data = element._postpwn;
+		if (data) {
+			var config = plugins[data.id];
+			if (config && config.onEnd) {
+				config.onEnd(element);
+				data.previouslyVisible = data.visible;
+			}
+		}
 	});
 }
 
@@ -37,7 +55,7 @@ module.exports = function factory (config) {
 	if (!config.thresholdAttribute) {
 		config.thresholdAttribute = "data-threshold";
 	}
-	
+
 	if (!config.id) {
 		config.id = uniqueId();
 	}
